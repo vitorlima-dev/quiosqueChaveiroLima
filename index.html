@@ -217,7 +217,7 @@ const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 
 /* ---------- acumuladores do BOM (preenchidos pela própria geometria) ---------- */
 const Q={};
-(function reset(){Object.assign(Q,{ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,ir:0,qgbt:0,cofre:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
+(function reset(){Object.assign(Q,{ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,ir:0,qgbt:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
 
 const S={night:false,closed:false,infra:false,dims:false,closure:'micro',density:'max',cooler:'portatil'};
 
@@ -391,7 +391,7 @@ function glow(color,size,x,y,z,base){
 }
 
 /* ---------- tomadas ---------- */
-const NEON={C1:0xFF7A00,C2:0x00E5FF,C4:0xFFE600,AR:0xFF2BD6,CFTV:0xFF2D55,IR:0xA66BFF,COFRE:0x4D9DFF};
+const NEON={C1:0xFF7A00,C2:0x00E5FF,C4:0xFFE600,AR:0xFF2BD6,CFTV:0xFF2D55,IR:0xA66BFF};
 const neonMats={}; const nm=(c,op)=>neonMats[c+'_'+op]||(neonMats[c+'_'+op]=new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:op,depthTest:false,depthWrite:false,toneMapped:false}));
 function neon(c,x0,x1,y0,y1,z0,z1,op){
   const m=bx(G.neon,nm(c,op==null?.55:op),x0,x1,y0,y1,z0,z1); m.renderOrder=12; return m;
@@ -493,7 +493,7 @@ let logoMat, haloMat;
   [hook,blade,shell].forEach(m=>{m.instanceMatrix.needsUpdate=true; g.add(m);}); shell.instanceColor.needsUpdate=true;
 })();
 
-/* ================= BANCADA DE MÁQUINAS, EXAUSTOR, COFRE ================= */
+/* ================= BANCADA DE MÁQUINAS E EXAUSTOR ================= */
 const air=[]; // setas de fluxo
 (function buildMachines(){
   const g=G.mach, zb=-1.10, zf=-.65, X0=BANCADA_X0; // bancada encurtada: começa em X0, liberando a passagem de entrada
@@ -518,11 +518,6 @@ const air=[]; // setas de fluxo
   // micro-exaustor de limalha embutido no tampo
   const ex=bx(g,M.graphite,.10,.28,.90,.99,-1.08,-.94); Q.exaustor++;
   for(let i=0;i<4;i++) bx(g,M.steel,.115+i*.04,.128+i*.04,.99,.996,-1.07,-.95);
-  // cofre blindado chumbado, porta aparente na frente do gabinete
-  const cf=grp('Cofre',g);
-  bx(cf,M.graphite,-.22,.22,.18,.62,zf,zf+.02); cyl(cf,M.steel,.055,.025,-.08,.40,zf+.03,'z',24); cyl(cf,M.dark,.015,.04,-.08,.40,zf+.045,'z',10);
-  bx(cf,M.dark,.08,.18,.46,.56,zf+.02,zf+.026); bx(cf,M.green,.105,.155,.51,.535,zf+.026,zf+.03);
-  [[-.19,.21],[.19,.21],[-.19,.59],[.19,.59]].forEach(([x,y])=>cyl(cf,M.steel,.01,.01,x,y,zf+.025,'z',8)); Q.cofre++;
   // régua 6x 20A na parede, acima das máquinas
   bx(g,M.alu,-.40,.20,1.235,1.305,-1.10,-1.07);
   for(let i=0;i<6;i++) socket(g,20,-.355+i*.1,1.27,-1.068,'z+','C1');
@@ -730,7 +725,7 @@ function buildTrays(){
     const cone=new T.Mesh(new T.ConeGeometry(.42,len,24,1,true).translate(0,-len/2,0),nm(NEON.CFTV,.1)); cone.position.set(x,TY0-.06,z);
     cone.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0),dir.normalize()); cone.renderOrder=11; G.neon.add(cone);
   };
-  cam(-1.84,-1.03,[.7,.95,.75],'Câmera dome balcão'); cam(1.84,1.0,[0,.4,-.65],'Câmera dome cofre');
+  cam(-1.84,-1.03,[.7,.95,.75],'Câmera dome balcão'); cam(1.84,1.0,[.2,.95,-.85],'Câmera dome bancada de máquinas');
   // sensor de presença infravermelho
   const ir=grp('Sensor IR',G.cftv); ir.position.set(1.30,TY0-.07,-1.07);
   bx(ir,std(0xf1f2f4,.5,.1),-.04,.04,-.03,.03,-.02,.02); const lens=new T.Mesh(new T.SphereGeometry(.026,14,10),std(0xe9d2d2,.2,.1,{transparent:true,opacity:.9})); lens.position.set(0,-.005,.03); ir.add(lens); Q.ir++;
@@ -751,8 +746,8 @@ function buildTrays(){
   route(NEON.CFTV,[[-1.84,2.0,-1.03],[-1.84,2.01,-1.10],[-1.78,2.01,-1.10],[-1.78,1.80,-1.10]],.016);
   route(NEON.CFTV,[[1.84,2.0,1.0],[1.84,2.0,-1.07],[-1.78,2.0,-1.07]],.016);
   route(NEON.IR,[[1.30,1.98,-1.07],[1.30,1.98,-1.09],[-1.74,1.98,-1.09],[-1.74,1.80,-1.09]],.014);
-  // cofre e exaustor
-  neon(NEON.COFRE,-.24,.24,.16,.64,-.66,-.60,.55); neon(NEON.C1,.08,.30,.88,1.02,-1.10,-.92,.6);
+  // micro-exaustor
+  neon(NEON.C1,.08,.30,.88,1.02,-1.10,-.92,.6);
   // etiquetas
   tag('C1 · 6× 20A · motores + micro-exaustor',-.1,1.72,-1.0,NEON.C1);
   tag('C2 · 4× 10A · relojoeiro',-1.9,1.38,.1,NEON.C2);
@@ -760,7 +755,6 @@ function buildTrays(){
   tag('Opção A · 20A dedicada',1.18,1.0,-.7,NEON.AR);
   tag('CFTV dome ×2',-1.4,2.15,-.9,NEON.CFTV);
   tag('Sensor IR',1.3,2.18,-.95,NEON.IR);
-  tag('Cofre chumbado',0,.14,-.45,NEON.COFRE);
 })();
 function label(text,o){
   o=o||{}; const fs=o.fs||40, cv=document.createElement('canvas'), cx=cv.getContext('2d');
@@ -939,7 +933,7 @@ function updateView(){
 }
 
 /* legenda dos circuitos */
-$('#legend').innerHTML=[['C1','Circuito 1 · motores do chaveiro, 6× 20A'],['C2','Circuito 2 · bancada do relojoeiro, 4× 10A'],['C4','Circuito 4 · QGBT, DR 30 mA, DPS, fontes LED'],['AR','Opção A · tomada 20A do nicho e fluxo de ar'],['CFTV','CFTV · 2 câmeras dome'],['IR','Sensor de presença infravermelho'],['COFRE','Cofre chumbado']]
+$('#legend').innerHTML=[['C1','Circuito 1 · motores do chaveiro, 6× 20A'],['C2','Circuito 2 · bancada do relojoeiro, 4× 10A'],['C4','Circuito 4 · QGBT, DR 30 mA, DPS, fontes LED'],['AR','Opção A · tomada 20A do nicho e fluxo de ar'],['CFTV','CFTV · 2 câmeras dome'],['IR','Sensor de presença infravermelho']]
   .map(([k,t])=>{const c='#'+('000000'+NEON[k].toString(16)).slice(-6); return `<li><i style="background:${c};color:${c}"></i>${t}</li>`;}).join('');
 
 /* ================= BOM ================= */
@@ -953,8 +947,7 @@ function renderBOM(){
     ['cort',`Cortina ${cKind}`,`${fmt(curtArea)} m²`,`frente 4,00 m + lateral direita 2,30 m × ${fmt(TY0-CTR)} m de queda · compra com 8 % de sobra: ${fmt(curtArea*1.08)} m²`],
     ['cx','Caixas de recolhimento na testeira',`${Q.caixas} un`,'1,70 m + 2,30 m (frente) e 2,30 m (lateral)'],
     ['tr','Trilhos-guia nos pilares',`${fmt(Q.trilho)} m`,`${Math.round(Q.trilho/(TY0-CTR))} guias de ${fmt(TY0-CTR)} m`],
-    ['cf','Câmeras dome + sensor IR',`${Q.cftv} + ${Q.ir} un`,'balcão e cofre; sensor de presença no fundo'],
-    ['cofre','Cofre blindado chumbado',`${Q.cofre} un`,'no piso, sob a bancada traseira de máquinas'],
+    ['cf','Câmeras dome + sensor IR',`${Q.cftv} + ${Q.ir} un`,'balcão e bancada de máquinas; sensor de presença no fundo'],
     ['Pontos elétricos'],
     ['t20','Tomadas 20A',`${Q.t20} un`,'6 industriais (motores) + 1 dedicada do nicho'],
     ['t10','Tomadas 10A',`${Q.t10} un`,'4 do posto do relojoeiro'],
