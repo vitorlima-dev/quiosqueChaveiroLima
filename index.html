@@ -189,7 +189,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Seções:</b> 30 / 50 / 20 % é a divisão comercial do mix. Os comprimentos físicos são 1,70 m, 2,30 m (frente) e 1,70 m (lateral).</li>
         <li><b>Bancada do relojoeiro:</b> 1,60 m nominais, sendo 0,60 m o módulo de canto da vitrine. O comprimento livre de trabalho é 1,00 m.</li>
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
-        <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar. A cortina noturna cobre só a frente e a lateral da vitrine em L, então esse vão fica sem fechamento à noite.</li>
+        <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine (queda até 1,10 m) e 1,00 m sobre o mini painel (queda até 1,30 m). Um poste de metalon em z = 0,55 m divide os dois.</li>
         <li><b>Madeira ripada</b> reveste a base da vitrine em L, o módulo de canto e o mini painel do relojoeiro. O fundo, onde ficam as chaves, é uma parede lisa e fosca em cinza chumbo, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
         <li><b>Bancada de máquinas</b> encurtada de 2,30 para 1,45 m, começando em x = -0,50 m. A passagem entre ela e a bancada do relojoeiro passou de cerca de 0,20 m para 0,86 m. As duas Yale e a pantográfica foram reacomodadas, com a pantográfica em escala 90 %.</li>
         <li><b>PDV removido</b> junto com as 4 tomadas 10A e o circuito 3. O circuito 4 manteve o número.</li>
@@ -431,9 +431,12 @@ const pane=(par,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,M.glass,x0,x1,y0,y1,z0,z1); 
   mt(g,XR-.04,XR,CTR-.04,CTR,ZB,ZF-VD); mt(g,1.4,1.44,CTR-.04,CTR,ZB,ZF-VD);
   // trilhos-guia da cortina (nos pilares, lado interno)
   const guideMat=std(0x45494d,.4,.7);
-  const guide=(x0,x1,z0,z1)=>{bx(g,guideMat,x0,x1,CTR,TY0,z0,z1); Q.trilho+=TY0-CTR;};
+  const guide=(x0,x1,z0,z1,y0)=>{ y0=y0||CTR; bx(g,guideMat,x0,x1,y0,TY0,z0,z1); Q.trilho+=TY0-y0; Q.guias=(Q.guias||0)+1; };
   guide(XL+.04,XL+.07,ZF-.12,ZF-.05); guide(-.35,-.32,ZF-.12,ZF-.05); guide(-.28,-.25,ZF-.12,ZF-.05); guide(XR-.07,XR-.04,ZF-.12,ZF-.05);
   guide(XR-.12,XR-.05,ZF-.07,ZF-.04); guide(XR-.12,XR-.05,ZB+.04,ZB+.07);
+  // lateral do relojoeiro: poste intermediário em z = 0,55 m e três guias (porta, divisão, canto)
+  mt(g,XL,XL+.04,CTR,TY0,.55,.59);
+  guide(XL+.05,XL+.12,-.45,-.42,PAINEL_H); guide(XL+.05,XL+.12,.52,.55); guide(XL+.05,XL+.12,ZF-.07,ZF-.04);
 })();
 
 /* ================= TESTEIRA, SANCA, CAIXAS DE CORTINA ================= */
@@ -453,6 +456,7 @@ const rollers=[]; // {mesh}
   const rm=std(0x8a9096,.35,.8);
   const roll=(len,axis,x,y,z)=>{ const c=cyl(g,rm,.06,len,x,y,z,axis,16); rollers.push(c); Q.caixas++; };
   roll(1.67,'x',-1.155,2.22,ZF-.06); roll(2.23,'x',.835,2.22,ZF-.06); roll(2.1,'z',XR-.06,2.22,-.05);
+  roll(.54,'z',XL+.06,2.22,.83); roll(.98,'z',XL+.06,2.22,.05); // lateral do relojoeiro: um rolo sobre o canto da vitrine, outro sobre o mini painel
   // sanca indireta 3000K sob a testeira (face interna)
   const strip=(x0,x1,z0,z1)=>{bx(g,M.ledWarm,x0,x1,TY0-.012,TY0,z0,z1); Q.ledSanca+=Math.max(x1-x0,z1-z0);};
   strip(XL+.12,XR-.12,ZF-th,ZF-th+.012); strip(XR-th,XR-th+.012,ZB+.04,ZF-th); strip(XL+th-.012,XL+th,ZB+.04,ZF-th); strip(XL+.12,-.55,ZB+.08,ZB+.092); strip(.55,XR-.12,ZB+.08,ZB+.092); // sanca do fundo interrompida atrás do logo
@@ -783,6 +787,7 @@ const curtains=[]; let curtMats={};
   };
   const dr=TY0-CTR;
   mk(1.66,dr,-1.155,ZF-.09,0,'Cortina frente esquerda'); mk(2.22,dr,.835,ZF-.09,0,'Cortina frente direita'); mk(2.18,dr,XR-.09,.0,Math.PI/2,'Cortina lateral direita');
+  mk(.54,dr,XL+.09,.83,Math.PI/2,'Cortina lateral relojoeiro (canto)'); mk(.98,TY0-PAINEL_H,XL+.09,.05,Math.PI/2,'Cortina lateral relojoeiro (painel)');
 })();
 let closeP=0;
 function setCurtain(p){
@@ -939,14 +944,14 @@ $('#legend').innerHTML=[['C1','Circuito 1 · motores do chaveiro, 6× 20A'],['C2
 /* ================= BOM ================= */
 const prev={};
 function renderBOM(){
-  const curtArea=(4.00+2.30)*(TY0-CTR), cKind=S.closure==='micro'?'microperfurada':'lona náutica';
+  const curtArea=(4.00+2.30)*(TY0-CTR)+.56*(TY0-CTR)+1.00*(TY0-PAINEL_H), cKind=S.closure==='micro'?'microperfurada':'lona náutica';
   const chTot=Q.chist.reduce((a,b)=>a+b,0), cooler=S.cooler==='portatil'?'Ar-condicionado portátil':'Climatizador evaporativo';
   const metalonBars=Math.ceil(Q.metalon*1.1/6);
   const rows=[
     ['Segurança e fechamento noturno'],
-    ['cort',`Cortina ${cKind}`,`${fmt(curtArea)} m²`,`frente 4,00 m + lateral direita 2,30 m × ${fmt(TY0-CTR)} m de queda · compra com 8 % de sobra: ${fmt(curtArea*1.08)} m²`],
-    ['cx','Caixas de recolhimento na testeira',`${Q.caixas} un`,'1,70 m + 2,30 m (frente) e 2,30 m (lateral)'],
-    ['tr','Trilhos-guia nos pilares',`${fmt(Q.trilho)} m`,`${Math.round(Q.trilho/(TY0-CTR))} guias de ${fmt(TY0-CTR)} m`],
+    ['cort',`Cortina ${cKind}`,`${fmt(curtArea)} m²`,`frente 4,00 m + lateral da vitrine 2,30 m (queda de ${fmt(TY0-CTR)} m) + lateral do relojoeiro 1,56 m (queda de ${fmt(TY0-CTR)} m no canto e ${fmt(TY0-PAINEL_H)} m sobre o painel) · compra com 8 % de sobra: ${fmt(curtArea*1.08)} m²`],
+    ['cx','Caixas de recolhimento na testeira',`${Q.caixas} un`,'1,70 m + 2,30 m (frente), 2,30 m (lateral da vitrine) e 0,56 m + 1,00 m (lateral do relojoeiro)'],
+    ['tr','Trilhos-guia nos pilares',`${fmt(Q.trilho)} m`,`${Q.guias} guias, com queda de ${fmt(TY0-PAINEL_H)} a ${fmt(TY0-CTR)} m`],
     ['cf','Câmeras dome + sensor IR',`${Q.cftv} + ${Q.ir} un`,'balcão e bancada de máquinas; sensor de presença no fundo'],
     ['Pontos elétricos'],
     ['t20','Tomadas 20A',`${Q.t20} un`,'6 industriais (motores) + 1 dedicada do nicho'],
