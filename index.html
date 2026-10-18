@@ -173,9 +173,9 @@ details li b{color:var(--ink);font-weight:600}
           <button type="button" role="radio" aria-checked="false" data-v="mid">45</button>
           <button type="button" role="radio" aria-checked="true" data-v="max">48</button>
         </div></div>
-      <div><label id="lf">Piso interno</label>
+      <div><label id="lf">Acabamento do piso</label>
         <div class="seg" role="radiogroup" aria-labelledby="lf" data-cfg="floor">
-          <button type="button" role="radio" aria-checked="true" data-v="existente">Piso do local</button>
+          <button type="button" role="radio" aria-checked="true" data-v="existente">Padrão (cinza)</button>
           <button type="button" role="radio" aria-checked="false" data-v="vinilico">Vinílico</button>
         </div></div>
       <div><label id="l3">Equipamento do nicho (Opção A)</label>
@@ -202,7 +202,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Loja fechada:</b> o vidro da vitrine recuou 6 cm da face externa, e as persianas descem nesse canal até o tampo da base de madeira (0,76 m), cobrindo o vidro e os produtos. Nos cantos as persianas se cruzam e a porta sobe até a travessa de topo, sem fresta. Conferi por traçado de raios, de 3,2 e 5 m de distância e de 0,7 a 2,0 m de altura, a cada 6°: nenhum dos 632 pontos de produto testados aparece. A cobertura do quiosque não está modelada, então a verificação vale para quem olha de fora na altura da rua.</li>
         <li><b>Madeira ripada</b> reveste a base da vitrine em L, o módulo de canto e o mini painel do relojoeiro. O fundo, onde ficam as chaves, é uma parede lisa e fosca em cinza chumbo, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
         <li><b>Mobiliário ilustrativo:</b> a cadeira de escritório (relojoeiro) e a banqueta (segundo funcionário, de frente para o balcão do chaveiro) servem só para ver a escala humana. Ficam fora da lista de materiais e dá para ocultá-las no botão do painel. A cadeira encosta na bancada com o assento a 0,56 m, e o tampo da bancada está a 0,95 m, então ela precisa ficar na altura máxima.</li>
-        <li><b>Piso:</b> o modelo não tem placa de piso própria. O padrão é o piso existente do local, e o piso vinílico é opcional, aplicado na área de circulação. Os eletrodutos rasteiros das rotas de energia correm no vão de 10 cm abaixo das bases, então precisam de eletroduto fixo no piso existente ou de rodapé técnico.</li>
+        <li><b>Piso:</b> o quiosque tem piso próprio, uma placa de 3 cm sobre o quadro de metalon, para poder ser transportado e remontado em outro lugar. O vinílico é um acabamento opcional por cima da placa, na área de circulação. As rotas de energia correm no vão de 10 cm abaixo das bases, dentro do próprio quiosque.</li>
         <li><b>Bancada do relojoeiro aberta:</b> sem vidro nem anteparo ao redor, só o mini painel de 1,30 m atrás. Sem o anteparo, a limalha da bancada de máquinas pode alcançar o posto. O micro-exaustor reduz isso, e vale testar na prática.</li>
         <li><b>Bancada de máquinas</b> encurtada de 2,30 para 1,45 m, começando em x = -0,50 m. A passagem entre ela e a bancada do relojoeiro passou de cerca de 0,20 m para 0,86 m. As duas Yale e a pantográfica foram reacomodadas, com a pantográfica em escala 90 %.</li>
         <li><b>PDV removido</b> junto com as 4 tomadas 10A e o circuito 3. O circuito 4 manteve o número.</li>
@@ -391,14 +391,17 @@ function texCurtain(kind){
   M.ground=ground.material;
   // meio-fio atrás do quiosque indica a rua
   const curb=new T.Mesh(new T.BoxGeometry(44,.12,.25),std(0x8d8f91,.9,0)); curb.position.set(0,.06,9.5); curb.userData.keep=true; scene.add(curb);
-  // piso interno: por padrão o piso existente do local (sem placa). Opção de piso vinílico, só sobre a área de circulação.
+  // piso próprio do quiosque: placa de 3 cm sobre o quadro de metalon, para o quiosque poder ser transportado
+  const floorTex=canvasTex(256,256,(cx,w,h)=>{ cx.fillStyle='#3a3d41'; cx.fillRect(0,0,w,h); cx.strokeStyle='#26282b'; cx.lineWidth=4; cx.strokeRect(0,0,w,h); cx.fillStyle='rgba(255,255,255,.03)'; cx.fillRect(10,10,100,100);},[8,4.6]);
+  const slab=new T.Mesh(new T.BoxGeometry(4,.03,2.3),[M.metal,M.metal,std(0xffffff,.55,.1,{map:floorTex}),M.metal,M.metal,M.metal]); slab.position.set(0,.015,0); slab.name='Piso do quiosque'; G.struct.add(slab);
+  // acabamento opcional: piso vinílico sobre a placa, só na área de circulação
   const vTex=canvasTex(256,256,(cx,w,h)=>{
     cx.fillStyle='#6c7075'; cx.fillRect(0,0,w,h);
     for(let i=0;i<4;i++){ const y=i*64; cx.fillStyle=['#70757a','#676b70','#6f7378','#696d72'][i]; cx.fillRect(0,y,w,63); cx.fillStyle='rgba(0,0,0,.35)'; cx.fillRect(0,y+63,w,1.5);
       const o=(i*83)%w; cx.fillRect(o,y,1.5,63); cx.fillStyle='rgba(255,255,255,.05)'; for(let k=0;k<14;k++) cx.fillRect((k*37+i*19)%w,y+((k*11)%60),24,1); }
   },[9,4.4]);
   const vinyl=new T.Mesh(new T.PlaneGeometry(3.92,2.22),std(0xffffff,.42,0,{map:vTex}));
-  vinyl.rotation.x=-Math.PI/2; vinyl.position.set(0,.006,0); vinyl.name='Piso vinílico'; vinyl.visible=false; G.floor.add(vinyl); M.vinyl=vinyl;
+  vinyl.rotation.x=-Math.PI/2; vinyl.position.set(0,.032,0); vinyl.name='Piso vinílico'; vinyl.visible=false; G.floor.add(vinyl); M.vinyl=vinyl;
   // área de circulação = planta 4,00 × 2,30 menos o que ocupam vitrines, bancadas e nicho
   const occ=4*VD + VD*(2.3-VD) + .6*1.0 + (.95-BANCADA_X0)*.45 + .45*.45;
   Q.vinilA=4*2.3-occ;
@@ -1014,8 +1017,8 @@ function renderBOM(){
     ['pt','Portas de correr internas (estoque)',`${Q.portas} un`,'base sólida anti-impacto de 0,10 a 0,75 m'],
     ['Estrutura e acabamentos'],
     S.floor==='vinilico'
-      ? ['pv','Piso vinílico (réguas ou manta)',`${fmt(Q.vinilA)} m²`,`só na área de circulação, sob as bancadas não precisa · compra com 10 % de perda: ${fmt(Q.vinilA*1.1)} m² · pede contrapiso regular e rodapé de 7 cm em curva`]
-      : ['pv','Piso interno','piso do local',`sem placa nem deck · o quadro de metalon assenta no piso existente, nivelado com sapatas`],
+      ? ['pv','Piso vinílico sobre a placa',`${fmt(Q.vinilA)} m²`,`só na área de circulação, sob as bancadas não precisa · compra com 10 % de perda: ${fmt(Q.vinilA*1.1)} m² · a placa de ${fmt(4*2.3)} m² do quiosque fica por baixo, como base transportável`]
+      : ['pv','Piso interno do quiosque','placa 3 cm',`placa sobre o quadro de metalon, ${fmt(4*2.3)} m², com acabamento cinza padrão · deixa o quiosque transportável`],
     ['mt','Metalon 40×40 chumbo',`${fmt(Q.metalon)} m`,`${metalonBars} barras de 6 m com 10 % de perda`],
     ['led1','Perfil LED 4000K IRC>95 (vitrines)',`${fmt(Q.ledVit)} m`,'uma linha sobre cada fileira de chisteiras'],
     ['led2','Fita LED 3000K (sanca da testeira)',`${fmt(Q.ledSanca)} m`,'iluminação indireta quente'],
