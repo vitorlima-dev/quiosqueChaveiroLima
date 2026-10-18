@@ -633,6 +633,8 @@ const VEL=[0x1f2d4a,0x4a1822,0x1c3b33];
     const g=grp('Vitrine '+d.id,G.vit); g.position.set(...d.pos); g.rotation.y=d.ry; RUNS[d.id]=g;
     const {x0,x1}=d, L=x1-x0;
     mdf(g,'c',x0+(d.id==='F'?.02:0),x1-.02,.10,.75,-VD,-.02); // recuo de 2 cm nas faces externas: as ripas ficam alinhadas ao vidro
+    // fundo do rodapé: a ripa desce até o quadro de metalon (0,04 m) e esta chapa fecha o vão de 0,04 a 0,10 m atrás dela
+    sheet(g,'c',x0+(d.id==='F'?.02:0),x1-.02,.04,.10,-.04,-.02);
     // portas de correr internas para estoque (lado do operador)
     const inner=d.id==='F'?(d.innerEnd-x0):L, nPortas=Math.max(1,Math.round(inner/.85)), wD=inner/nPortas;
     for(let i=0;i<nPortas;i++){ const a=x0+i*wD+.03; bx(g,std(0x44484c,.7,.1),a,a+wD-.06,.16,.69,-VD-.004,-VD); bx(g,M.dark,a+wD*.5-.012,a+wD*.5+.012,.32,.52,-VD-.008,-VD-.004); Q.portas++; }
@@ -672,10 +674,10 @@ function texWood(){
     for(let i=0;i<n;i++){ const p=a0+off+i*P+P/2; if(skip&&p>skip[0]&&p<skip[1]) continue;
       list.push(axis==='x'?[p,(y0+y1)/2,c,W,y1-y0,D]:[c,(y0+y1)/2,p,D,y1-y0,W]); Q.ripaM+=y1-y0; Q.ripaA+=P*(y1-y0); }
   };
-  run('x',XL+.045,XR-.045,ZF-D/2,.10,.75,[-.34,-.26]);        // frente (clientes)
-  run('z',ZB+.045,ZF-.045,XR-D/2,.10,.75);                    // lateral da vitrine em L
+  run('x',XL+.045,XR-.045,ZF-D/2,.04,.75,[-.34,-.26]);        // frente (clientes)
+  run('z',ZB+.045,ZF-.045,XR-D/2,.04,.75);                    // lateral da vitrine em L
   run('z',-.43,.53,XL+D/2,.04,PAINEL_H-.04);                  // mini painel do posto de relógios
-  run('z',.57,ZF-.045,XL+D/2,.10,.75);                        // lateral do módulo de canto (Relojoaria)
+  run('z',.57,ZF-.045,XL+D/2,.04,.75);                        // lateral do módulo de canto (Relojoaria)
   const im=new T.InstancedMesh(geo,mat,list.length), m=new T.Matrix4(), q=new T.Quaternion(), pos=new T.Vector3(), sc=new T.Vector3(), c=new T.Color();
   const tones=[1,.93,.86,.97,.9];
   list.forEach((r,i)=>{ pos.set(r[0],r[1],r[2]); sc.set(r[3],r[4],r[5]); m.compose(pos,q,sc); im.setMatrixAt(i,m); const t=tones[(i*7+3)%5]; im.setColorAt(i,c.setRGB(t,t*.97,t*.92)); });
