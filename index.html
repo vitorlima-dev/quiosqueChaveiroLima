@@ -44,6 +44,10 @@ button{font:inherit;color:inherit}
 .chip b{font-family:var(--f-display);font-size:16px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;line-height:1.1}
 .chip small{font-size:11px;color:var(--muted);line-height:1.2}
 .chip[aria-pressed="true"]{border-color:var(--mostarda);box-shadow:inset 0 -4px 0 var(--mostarda),var(--shadow)}
+.dock{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:grid;grid-template-columns:repeat(2,48px);gap:6px;z-index:2}
+.dock .dbtn{width:48px;height:48px;padding:0;justify-content:center;touch-action:none}
+.dock .dbtn svg{width:22px;height:22px}
+.dock .wide{grid-column:1/-1;width:auto;gap:5px;font-size:11.5px;padding:0 6px;white-space:nowrap;justify-content:center}
 .hint{position:absolute;left:16px;bottom:86px;font-size:12px;color:var(--ink);background:var(--scrim);border:1px solid var(--line);border-radius:8px;padding:6px 10px;
   transition:opacity .6s;pointer-events:none;box-shadow:var(--shadow)}
 .hint.off{opacity:0}
@@ -93,6 +97,7 @@ details ul{margin:0 0 12px;padding-left:18px;color:var(--muted);font-size:12.5px
 details li b{color:var(--ink);font-weight:600}
 
 @media (max-width:900px){
+  .dock{top:150px;transform:none}
   html,body{height:auto}
   body{overflow:auto}
   .app{grid-template-columns:1fr;height:auto}
@@ -118,8 +123,17 @@ details li b{color:var(--ink);font-weight:600}
       <button class="btn" type="button" id="btnInfra" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Visualizar Infraestrutura</button>
     </div>
 
-    <div class="hint" id="hint">1 dedo gira · pinça aproxima · 2 dedos deslocam</div>
-    <div class="status" aria-hidden="true"><span class="tag" id="tagDay">Dia</span><span class="tag" id="tagOpen">Aberto</span><span class="tag" id="tagInfra" hidden>Infra</span></div>
+    <div class="dock" role="group" aria-label="Visão livre 360 graus">
+      <button class="btn dbtn" type="button" data-hold="left" aria-label="Girar o quiosque para a esquerda (segure)" title="Girar para a esquerda (segure)"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <button class="btn dbtn" type="button" data-hold="right" aria-label="Girar o quiosque para a direita (segure)" title="Girar para a direita (segure)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+      <button class="btn dbtn" type="button" data-hold="up" aria-label="Subir a câmera (segure)" title="Subir (segure)"><svg viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg></button>
+      <button class="btn dbtn" type="button" data-hold="down" aria-label="Descer a câmera (segure)" title="Descer (segure)"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg></button>
+      <button class="btn dbtn" type="button" data-hold="zin" aria-label="Aproximar (segure)" title="Aproximar (segure)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button class="btn dbtn" type="button" data-hold="zout" aria-label="Afastar (segure)" title="Afastar (segure)"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+      <button class="btn wide" type="button" id="btnAuto" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>Girar 360°</button>
+    </div>
+    <div class="hint" id="hint">Arraste para girar 360° · pinça aproxima · 2 dedos deslocam</div>
+    <div class="status" aria-hidden="true"><span class="tag" id="tagView">Vista 0°</span><span class="tag" id="tagDay">Dia</span><span class="tag" id="tagOpen">Aberto</span><span class="tag" id="tagInfra" hidden>Infra</span></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <div class="presets" role="group" aria-label="Câmeras">
@@ -223,8 +237,8 @@ camera.position.set(-0.5,2.1,5.5);
 const controls=new T.OrbitControls(camera,canvas);
 controls.target.set(0,1.05,0.4);
 controls.enableDamping=true; controls.dampingFactor=0.09;
-controls.rotateSpeed=0.55; controls.zoomSpeed=0.85; controls.panSpeed=0.7; controls.screenSpacePanning=true;
-controls.minDistance=0.7; controls.maxDistance=15; controls.maxPolarAngle=Math.PI*0.495;
+controls.rotateSpeed=0.9; controls.zoomSpeed=0.85; controls.panSpeed=0.7; controls.screenSpacePanning=true;
+controls.minDistance=0.4; controls.maxDistance=20; controls.maxPolarAngle=Math.PI*0.499; controls.minAzimuthAngle=-Infinity; controls.maxAzimuthAngle=Infinity; controls.autoRotateSpeed=2.2;
 controls.touches={ONE:T.TOUCH.ROTATE,TWO:T.TOUCH.DOLLY_PAN};
 controls.update();
 
@@ -879,6 +893,34 @@ document.querySelectorAll('[data-cfg]').forEach(sg=>sg.querySelectorAll('button'
   else if(k==='cooler'){ setCooler(v); }
 })));
 
+/* visão livre: botões de segurar, giro automático e indicador de ângulo */
+const hold={left:0,right:0,up:0,down:0,zin:0,zout:0}; let anyHold=false;
+document.querySelectorAll('[data-hold]').forEach(b=>{
+  const k=b.dataset.hold;
+  const on=e=>{ e.preventDefault(); try{b.setPointerCapture(e.pointerId);}catch(_){} hold[k]=1; anyHold=true; hideHint();
+    if(camTween){ const i=tweens.indexOf(camTween); if(i>=0) tweens.splice(i,1); camTween=null; }
+    document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','false')); };
+  const off=()=>{ hold[k]=0; anyHold=Object.values(hold).some(Boolean); };
+  b.addEventListener('pointerdown',on); b.addEventListener('pointerup',off); b.addEventListener('pointercancel',off); b.addEventListener('lostpointercapture',off);
+  b.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); hold[k]=1; anyHold=true; } });
+  b.addEventListener('keyup',e=>{ if(e.key==='Enter'||e.key===' ') off(); });
+});
+const _off=new T.Vector3(), _sph=new T.Spherical();
+function holdFrame(dt){
+  _off.copy(camera.position).sub(controls.target); _sph.setFromVector3(_off);
+  _sph.theta+=(hold.left-hold.right)*dt*1.4;
+  _sph.phi=Math.max(.02,Math.min(controls.maxPolarAngle,_sph.phi+(hold.down-hold.up)*dt*.9));
+  _sph.radius=Math.max(controls.minDistance,Math.min(controls.maxDistance,_sph.radius*(1+(hold.zout-hold.zin)*dt*1.1)));
+  _off.setFromSpherical(_sph); camera.position.copy(controls.target).add(_off); camera.lookAt(controls.target); dirty=true;
+}
+$('#btnAuto').addEventListener('click',()=>{ controls.autoRotate=!controls.autoRotate; $('#btnAuto').setAttribute('aria-pressed',String(controls.autoRotate)); hideHint(); dirty=true; });
+canvas.addEventListener('pointerdown',()=>{ if(controls.autoRotate){ controls.autoRotate=false; $('#btnAuto').setAttribute('aria-pressed','false'); } });
+const VIEW_NAMES=['Frente','Frente · relojoeiro','Lateral do relojoeiro','Fundo · relojoeiro','Fundo','Fundo · Outros','Lateral Outros','Frente · Outros'];
+function updateView(){
+  const o=camera.position, t=controls.target; let a=Math.atan2(o.x-t.x,o.z-t.z)*180/Math.PI; if(a<0) a+=360;
+  $('#tagView').textContent='Vista '+Math.round(a)+'° · '+VIEW_NAMES[Math.round(a/45)%8];
+}
+
 /* legenda dos circuitos */
 $('#legend').innerHTML=[['C1','Circuito 1 · motores do chaveiro, 6× 20A'],['C2','Circuito 2 · bancada do relojoeiro, 4× 10A'],['C3','Circuito 3 · PDV, 4× 10A'],['C4','Circuito 4 · QGBT, DR 30 mA, DPS, fontes LED'],['AR','Opção A · tomada 20A do nicho e fluxo de ar'],['CFTV','CFTV · 2 câmeras dome'],['IR','Sensor de presença infravermelho'],['COFRE','Cofre chumbado']]
   .map(([k,t])=>{const c='#'+('000000'+NEON[k].toString(16)).slice(-6); return `<li><i style="background:${c};color:${c}"></i>${t}</li>`;}).join('');
@@ -995,9 +1037,11 @@ function frame(now){
   requestAnimationFrame(frame);
   const dt=Math.min(.1,(now-last)/1000); last=now;
   tickTweens(dt);
+  if(controls.autoRotate) dirty=true;
   if(S.infra&&ghostT>.5){ air.forEach(c=>{ c.userData.t=(c.userData.t+dt*.5)%1; const k=c.userData.t; c.position.z=-.62+k*.55; c.scale.setScalar(1-Math.abs(k-.5)*1.2); }); dirty=true; }
+  if(anyHold) holdFrame(dt);
   const moved=controls.update();
-  if(moved||dirty){ dirty=false; renderer.render(scene,camera); }
+  if(moved||dirty){ dirty=false; updateView(); renderer.render(scene,camera); }
 }
 
 /* ---------- finalização ---------- */
