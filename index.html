@@ -175,7 +175,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Seções:</b> 30 / 50 / 20 % é a divisão comercial do mix. Os comprimentos físicos são 1,70 m, 2,30 m (frente) e 1,70 m (lateral).</li>
         <li><b>Bancada do relojoeiro:</b> 1,60 m nominais, sendo 0,60 m o módulo de canto da vitrine. O comprimento livre de trabalho é 1,00 m.</li>
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
-        <li><b>Fechamento fixo</b> da lateral do relojoeiro em chapa MDF cinza chumbo. A cortina cobre a frente e a lateral da vitrine em L.</li>
+        <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m, com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar. A cortina noturna cobre só a frente e a lateral da vitrine em L, então esse vão de 0,75 m de altura fica sem fechamento à noite.</li>
         <li><b>Áreas</b> são líquidas, sem perda de corte. A cortina mostra também a compra com 8 % de sobra para dobra e sobreposição.</li>
         <li><b>Exportar GLTF</b> salva o estado atual da cena em JSON, já com o espelhamento aplicado. Renomeie o arquivo de <code>.gltf.json</code> para <code>.gltf</code>.</li>
       </ul>
@@ -194,7 +194,7 @@ const $ = s => document.querySelector(s);
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- dimensões (metros). X: esquerda(-) a direita(+) vista da rua. Z: fundo(-) a frente(+). ---------- */
-const XL=-2, XR=2, ZF=1.15, ZB=-1.15, H=2.4, TY0=2.05, CTR=1.10, VD=0.60;
+const XL=-2, XR=2, ZF=1.15, ZB=-1.15, H=2.4, TY0=2.05, CTR=1.10, VD=0.60, PAINEL_H=1.30; // PAINEL_H: altura do mini painel do posto de relógios
 const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 
 /* ---------- acumuladores do BOM (preenchidos pela própria geometria) ---------- */
@@ -549,8 +549,9 @@ let coolerPortatil, coolerClimat;
 /* ================= LATERAL ESQUERDA: PORTA, FECHAMENTO, BANCADA ================= */
 (function buildLeft(){
   const g=G.left, t=.04;
-  // fechamento fixo (premissa): chumbo por fora, branco por dentro
-  sheet(g,'c',XL,XL+.015,0.04,TY0-.04,-.45,ZF-.04); sheet(g,'b',XL+.015,XL+.035,0.04,TY0-.04,-.45,ZF-.04);
+  // mini painel do posto de relógios: MDF cinza chumbo até 1,30 m; acima fica aberto (sem vidro) para ventilar
+  sheet(g,'c',XL,XL+.015,0.04,PAINEL_H-.04,-.45,ZF-.04); sheet(g,'b',XL+.015,XL+.035,0.04,PAINEL_H-.04,-.45,ZF-.04);
+  mt(g,XL,XL+.04,PAINEL_H-.04,PAINEL_H,-.45,ZF-.04);
   // porta portinhola de 70 cm com friso mostarda e fechadura
   const d=grp('Portinhola',g);
   mt(d,XL,XL+t,0,.04,ZB+t,-.49); mt(d,XL,XL+t,1.96,2.0,ZB+t,-.49);
@@ -912,7 +913,7 @@ function renderBOM(){
     ['led1','Perfil LED 4000K IRC>95 (vitrines)',`${fmt(Q.ledVit)} m`,'uma linha sobre cada fileira de chisteiras'],
     ['led2','Fita LED 3000K (sanca da testeira)',`${fmt(Q.ledSanca)} m`,'iluminação indireta quente'],
     ['led3','Halo LED branco do logo',`${fmt(Q.ledHalo)} m`,'contorno do disco preto'],
-    ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC+Q.mdfB)} m²`,`${fmt(Q.mdfC)} m² de bases, bancadas, nicho e porta + ${fmt(Q.mdfB)} m² de painel de fundo canaletado, forros e fechamento lateral`],
+    ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC+Q.mdfB)} m²`,`${fmt(Q.mdfC)} m² de bases, bancadas, nicho e porta + ${fmt(Q.mdfB)} m² de painel de fundo canaletado, forros e mini painel do relojoeiro`],
     ['vd','Vidro temperado',`${fmt(Q.vidro)} m²`,'caixa 0,75 a 1,10 m e anteparo anti-limalha de 25 cm']
   ];
   let html='', first=true;
