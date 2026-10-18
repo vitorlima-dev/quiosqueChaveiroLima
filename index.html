@@ -171,6 +171,11 @@ details li b{color:var(--ink);font-weight:600}
           <button type="button" role="radio" aria-checked="false" data-v="mid">45</button>
           <button type="button" role="radio" aria-checked="true" data-v="max">48</button>
         </div></div>
+      <div><label id="lf">Piso interno</label>
+        <div class="seg" role="radiogroup" aria-labelledby="lf" data-cfg="floor">
+          <button type="button" role="radio" aria-checked="true" data-v="existente">Piso do local</button>
+          <button type="button" role="radio" aria-checked="false" data-v="vinilico">Vinílico</button>
+        </div></div>
       <div><label id="l3">Equipamento do nicho (Opção A)</label>
         <div class="seg" role="radiogroup" aria-labelledby="l3" data-cfg="cooler">
           <button type="button" role="radio" aria-checked="true" data-v="portatil">Ar portátil</button>
@@ -194,6 +199,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine e 1,00 m sobre o mini painel. Um poste de metalon em z = 0,55 m divide os dois.</li>
         <li><b>Loja fechada:</b> o vidro da vitrine recuou 6 cm da face externa, e as persianas descem nesse canal até o tampo da base de madeira (0,76 m), cobrindo o vidro e os produtos. Nos cantos as persianas se cruzam e a porta sobe até a travessa de topo, sem fresta. Conferi por traçado de raios, de 3,2 e 5 m de distância e de 0,7 a 2,0 m de altura, a cada 6°: nenhum dos 632 pontos de produto testados aparece. A cobertura do quiosque não está modelada, então a verificação vale para quem olha de fora na altura da rua.</li>
         <li><b>Madeira ripada</b> reveste a base da vitrine em L, o módulo de canto e o mini painel do relojoeiro. O fundo, onde ficam as chaves, é uma parede lisa e fosca em cinza chumbo, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
+        <li><b>Piso:</b> o modelo não tem placa de piso própria. O padrão é o piso existente do local, e o piso vinílico é opcional, aplicado na área de circulação. Os eletrodutos rasteiros das rotas de energia correm no vão de 10 cm abaixo das bases, então precisam de eletroduto fixo no piso existente ou de rodapé técnico.</li>
         <li><b>Bancada de máquinas</b> encurtada de 2,30 para 1,45 m, começando em x = -0,50 m. A passagem entre ela e a bancada do relojoeiro passou de cerca de 0,20 m para 0,86 m. As duas Yale e a pantográfica foram reacomodadas, com a pantográfica em escala 90 %.</li>
         <li><b>PDV removido</b> junto com as 4 tomadas 10A e o circuito 3. O circuito 4 manteve o número.</li>
         <li><b>Áreas</b> são líquidas, sem perda de corte. A cortina mostra também a compra com 8 % de sobra para dobra e sobreposição.</li>
@@ -222,7 +228,7 @@ const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 const Q={};
 (function reset(){Object.assign(Q,{ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,ir:0,qgbt:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
 
-const S={night:false,closed:false,infra:false,dims:false,closure:'lona',density:'max',cooler:'portatil'};
+const S={night:false,closed:false,infra:false,dims:false,closure:'lona',floor:'existente',density:'max',cooler:'portatil'};
 
 /* ---------- renderer / cena ---------- */
 const canvas=$('#gl'), stage=$('#stage');
@@ -295,7 +301,7 @@ const letreiroMats=[], glowMats=[], ledMats=[M.ledCool,M.ledWarm,M.ledWhite];
 
 /* ---------- grupos ---------- */
 const root=new T.Group(); root.name='Quiosque Chaveiro Lima'; root.scale.x=-1; scene.add(root); // espelhado em X: bancada do relojoeiro à direita de quem olha a fachada
-const G={}; ['struct','test','back','mach','nicho','left','vit','trays','wood','elec','cftv','curt','glow','neon','dims'].forEach(n=>G[n]=grp(n));
+const G={}; ['struct','test','back','mach','nicho','left','vit','trays','wood','floor','elec','cftv','curt','glow','neon','dims'].forEach(n=>G[n]=grp(n));
 G.neon.userData.keep=true; G.dims.userData.keep=true; G.glow.userData.keep=true; G.neon.visible=false; G.dims.visible=false;
 G.trays.userData.noExport=false;
 
@@ -381,9 +387,17 @@ function texCurtain(kind){
   M.ground=ground.material;
   // meio-fio atrás do quiosque indica a rua
   const curb=new T.Mesh(new T.BoxGeometry(44,.12,.25),std(0x8d8f91,.9,0)); curb.position.set(0,.06,9.5); curb.userData.keep=true; scene.add(curb);
-  const floorTex=canvasTex(256,256,(cx,w,h)=>{ cx.fillStyle='#3a3d41'; cx.fillRect(0,0,w,h); cx.strokeStyle='#26282b'; cx.lineWidth=4; cx.strokeRect(0,0,w,h); cx.fillStyle='rgba(255,255,255,.03)'; cx.fillRect(10,10,100,100);},[8,4.6]);
-  const fm=std(0xffffff,.55,.1,{map:floorTex});
-  const slab=new T.Mesh(new T.BoxGeometry(4,.03,2.3),[M.metal,M.metal,fm,M.metal,M.metal,M.metal]); slab.position.set(0,.015,0); G.struct.add(slab);
+  // piso interno: por padrão o piso existente do local (sem placa). Opção de piso vinílico, só sobre a área de circulação.
+  const vTex=canvasTex(256,256,(cx,w,h)=>{
+    cx.fillStyle='#6c7075'; cx.fillRect(0,0,w,h);
+    for(let i=0;i<4;i++){ const y=i*64; cx.fillStyle=['#70757a','#676b70','#6f7378','#696d72'][i]; cx.fillRect(0,y,w,63); cx.fillStyle='rgba(0,0,0,.35)'; cx.fillRect(0,y+63,w,1.5);
+      const o=(i*83)%w; cx.fillRect(o,y,1.5,63); cx.fillStyle='rgba(255,255,255,.05)'; for(let k=0;k<14;k++) cx.fillRect((k*37+i*19)%w,y+((k*11)%60),24,1); }
+  },[9,4.4]);
+  const vinyl=new T.Mesh(new T.PlaneGeometry(3.92,2.22),std(0xffffff,.42,0,{map:vTex}));
+  vinyl.rotation.x=-Math.PI/2; vinyl.position.set(0,.006,0); vinyl.name='Piso vinílico'; vinyl.visible=false; G.floor.add(vinyl); M.vinyl=vinyl;
+  // área de circulação = planta 4,00 × 2,30 menos o que ocupam vitrines, bancadas e nicho
+  const occ=4*VD + VD*(2.3-VD) + .6*1.0 + (.95-BANCADA_X0)*.45 + .45*.45;
+  Q.vinilA=4*2.3-occ;
 })();
 
 /* ---------- brilho (sprite aditivo) ---------- */
@@ -917,6 +931,7 @@ document.querySelectorAll('[data-cfg]').forEach(sg=>sg.querySelectorAll('button'
   if(k==='closure'){ S.closure=v; setClosure(v); $('#noteClosure').hidden=v!=='micro'; renderBOM(); dirty=true; }
   else if(k==='density'){ S.density=v; buildTrays(); renderBOM(); dirty=true; }
   else if(k==='cooler'){ setCooler(v); }
+  else if(k==='floor'){ S.floor=v; M.vinyl.visible=v==='vinilico'; renderBOM(); dirty=true; }
 })));
 
 /* visão livre: botões de segurar, giro automático e indicador de ângulo */
@@ -976,6 +991,9 @@ function renderBOM(){
     ['ch','Chisteiras aveludadas',`${chTot} un`,`faixa 42 a 48 · relojoaria ${Q.chist[0]} · chaveiro ${Q.chist[1]} · outros ${Q.chist[2]}`],
     ['pt','Portas de correr internas (estoque)',`${Q.portas} un`,'base sólida anti-impacto de 0,10 a 0,75 m'],
     ['Estrutura e acabamentos'],
+    S.floor==='vinilico'
+      ? ['pv','Piso vinílico (réguas ou manta)',`${fmt(Q.vinilA)} m²`,`só na área de circulação, sob as bancadas não precisa · compra com 10 % de perda: ${fmt(Q.vinilA*1.1)} m² · pede contrapiso regular e rodapé de 7 cm em curva`]
+      : ['pv','Piso interno','piso do local',`sem placa nem deck · o quadro de metalon assenta no piso existente, nivelado com sapatas`],
     ['mt','Metalon 40×40 chumbo',`${fmt(Q.metalon)} m`,`${metalonBars} barras de 6 m com 10 % de perda`],
     ['led1','Perfil LED 4000K IRC>95 (vitrines)',`${fmt(Q.ledVit)} m`,'uma linha sobre cada fileira de chisteiras'],
     ['led2','Fita LED 3000K (sanca da testeira)',`${fmt(Q.ledSanca)} m`,'iluminação indireta quente'],
