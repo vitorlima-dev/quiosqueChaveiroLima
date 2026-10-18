@@ -2,25 +2,14 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: palco 3D à esquerda, painel de configuração e BOM à direita; em tela estreita o painel desce abaixo do palco. */
+/* Visual único em cinza chumbo. Layout: palco 3D à esquerda, painel de configuração e BOM à direita; em tela estreita o painel desce abaixo do palco. */
 :root{
-  --bg:#e8e9eb; --panel:#f6f6f7; --panel2:#ebecee; --ink:#1c1e20; --muted:#5b6065; --line:#d0d3d6;
-  --chumbo:#2B2D2F; --mostarda:#D4A017; --on-mostarda:#241b00; --accent-text:#7a5800;
-  --stage:#dde5ec; --scrim:rgba(246,246,247,.94); --shadow:0 6px 22px rgba(20,24,28,.22);
+  --bg:#1b1d1f; --panel:#2B2D2F; --panel2:#35383b; --ink:#ececee; --muted:#a4a9ae; --line:#45494d;
+  --chumbo:#2B2D2F; --mostarda:#D4A017; --on-mostarda:#241b00; --accent-text:#E6B52F;
+  --stage:#14171b; --scrim:rgba(43,45,47,.95); --shadow:0 6px 22px rgba(0,0,0,.5);
   --f-display:'Barlow Condensed','Arial Narrow',sans-serif;
   --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#121314; --panel:#1b1d1f; --panel2:#25282b; --ink:#ececee; --muted:#9a9fa5; --line:#33373b;
-    --accent-text:#EDBE3C; --stage:#0d1118; --scrim:rgba(27,29,31,.94); --shadow:0 6px 22px rgba(0,0,0,.5);
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
-  --bg:#121314; --panel:#1b1d1f; --panel2:#25282b; --ink:#ececee; --muted:#9a9fa5; --line:#33373b;
-  --accent-text:#EDBE3C; --stage:#0d1118; --scrim:rgba(27,29,31,.94); --shadow:0 6px 22px rgba(0,0,0,.5);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -182,13 +171,13 @@ details li b{color:var(--ink);font-weight:600}
     <details>
       <summary>Premissas e ajustes do modelo</summary>
       <ul>
-        <li><b>Esquerda e direita</b> valem para quem está na rua olhando a fachada. A planta baixa mostra a frente embaixo.</li>
+        <li><b>Esquerda e direita</b> seguem o croqui do projeto: bancada do relojoeiro e relojoaria na esquerda, vitrine em L (Outros) e nicho na direita. Na rua, olhando a fachada, a bancada do relojoeiro fica à direita. A planta baixa mostra a frente no topo, como no croqui.</li>
         <li><b>Seções:</b> 30 / 50 / 20 % é a divisão comercial do mix. Os comprimentos físicos são 1,70 m, 2,30 m (frente) e 1,70 m (lateral).</li>
         <li><b>Bancada do relojoeiro:</b> 1,60 m nominais, sendo 0,60 m o módulo de canto da vitrine. O comprimento livre de trabalho é 1,00 m.</li>
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
-        <li><b>Lateral esquerda</b> recebeu fechamento fixo em chapa MDF (chumbo por fora, branco por dentro). A cortina cobre frente e lateral direita.</li>
+        <li><b>Fechamento fixo</b> da lateral do relojoeiro em chapa MDF cinza chumbo. A cortina cobre a frente e a lateral da vitrine em L.</li>
         <li><b>Áreas</b> são líquidas, sem perda de corte. A cortina mostra também a compra com 8 % de sobra para dobra e sobreposição.</li>
-        <li><b>Exportar GLTF</b> salva o estado atual da cena em JSON. Renomeie o arquivo de <code>.gltf.json</code> para <code>.gltf</code>.</li>
+        <li><b>Exportar GLTF</b> salva o estado atual da cena em JSON, já com o espelhamento aplicado. Renomeie o arquivo de <code>.gltf.json</code> para <code>.gltf</code>.</li>
       </ul>
     </details>
   </aside>
@@ -230,7 +219,7 @@ const scene=new T.Scene();
 const SKY_DAY=new T.Color(0xcfdfec), SKY_NIGHT=new T.Color(0x070b14);
 scene.background=SKY_DAY.clone(); scene.fog=new T.Fog(SKY_DAY.clone().convertSRGBToLinear(),16,46);
 const camera=new T.PerspectiveCamera(38,1,0.08,90);
-camera.position.set(0.4,2.15,5.6);
+camera.position.set(-0.5,2.1,5.5);
 const controls=new T.OrbitControls(camera,canvas);
 controls.target.set(0,1.05,0.4);
 controls.enableDamping=true; controls.dampingFactor=0.09;
@@ -243,10 +232,11 @@ controls.update();
 const lerp=(a,b,t)=>a+(b-a)*t;
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const fmt=(n,d=2)=>n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
-function canvasTex(w,h,draw,rep){
+function canvasTex(w,h,draw,rep,flip){
   const cv=document.createElement('canvas'); cv.width=w; cv.height=h; draw(cv.getContext('2d'),w,h);
   const t=new T.CanvasTexture(cv); t.encoding=T.sRGBEncoding; t.anisotropy=maxAniso;
   if(rep){t.wrapS=t.wrapT=T.RepeatWrapping; t.repeat.set(rep[0],rep[1]);}
+  if(flip){t.repeat.x=-1; t.offset.x=1;} // a cena é espelhada em X; desfaz o espelho do texto
   return t;
 }
 function bx(par,mat,x0,x1,y0,y1,z0,z1){
@@ -265,12 +255,12 @@ const lin=h=>new T.Color(h).convertSRGBToLinear();
 const cset=(col,h)=>col.setHex(h).convertSRGBToLinear();
 const std=(c,r,m,extra)=>{ const o=Object.assign({color:lin(c),roughness:r,metalness:m},extra||{}); if(o.emissive) o.emissive=o.emissive.convertSRGBToLinear(); return new T.MeshStandardMaterial(o); };
 const M={
-  metal:std(COL.chumbo,.42,.65), mdfC:std(0x383b3e,.78,.05), mdfB:std(COL.branco,.82,0),
+  metal:std(COL.chumbo,.42,.65), mdfC:std(0x383b3e,.78,.05), mdfB:std(0x34373a,.8,.05),
   mustard:std(COL.mostarda,.5,.15), steel:std(0x9aa1a8,.35,.85), alu:std(0xc9ced3,.3,.9),
   dark:std(0x111213,.6,.2), graphite:std(0x1b1d1f,.5,.5), rubber:std(0x0d0d0e,.9,0),
   machA:std(0x93a0ad,.45,.6), machB:std(0xb23a2f,.5,.3), wood:std(0x7a5a3a,.8,0),
   glass:std(0xd2e6ee,.05,.1,{transparent:true,opacity:.17,depthWrite:false}),
-  vel:std(0xffffff,1,0), trayBase:std(0xf0f0f2,.8,0),
+  vel:std(0xffffff,1,0), trayBase:std(0x55595d,.7,.1),
   plateW:std(0xe9eaec,.6,0), plateB:std(0x2c6db4,.55,.1), hole:std(0x08090a,.9,0),
   ledCool:std(0x222222,.4,0,{emissive:new T.Color(0xFFE9D2),emissiveIntensity:1}),
   ledWarm:std(0x222222,.4,0,{emissive:new T.Color(0xFFB863),emissiveIntensity:1}),
@@ -283,7 +273,7 @@ const M={
 const glowMats=[], ledMats=[M.ledCool,M.ledWarm,M.ledWhite];
 
 /* ---------- grupos ---------- */
-const root=new T.Group(); root.name='Quiosque Chaveiro Lima'; scene.add(root);
+const root=new T.Group(); root.name='Quiosque Chaveiro Lima'; root.scale.x=-1; scene.add(root); // espelhado em X: bancada do relojoeiro à direita de quem olha a fachada
 const G={}; ['struct','test','back','mach','nicho','left','vit','trays','pdv','elec','cftv','curt','glow','neon','dims'].forEach(n=>G[n]=grp(n));
 G.neon.userData.keep=true; G.dims.userData.keep=true; G.glow.userData.keep=true; G.neon.visible=false; G.dims.visible=false;
 G.trays.userData.noExport=false;
@@ -294,7 +284,7 @@ const sun=new T.DirectionalLight(0xfff3df,1.1); sun.position.set(5,9,7); sun.cas
 sun.shadow.mapSize.set(2048,2048); const sc=sun.shadow.camera; sc.left=-5;sc.right=5;sc.top=5;sc.bottom=-5;sc.near=2;sc.far=24; sun.shadow.bias=-0.0004; sun.shadow.normalBias=0.02;
 scene.add(sun);
 const moon=new T.DirectionalLight(0x7f9bff,0); moon.position.set(-4,7,5); scene.add(moon);
-const mkPL=(c,d,x,y,z)=>{const l=new T.PointLight(c,0,d,2); l.position.set(x,y,z); scene.add(l); return l;};
+const mkPL=(c,d,x,y,z)=>{const l=new T.PointLight(c,0,d,2); l.position.set(x,y,z); root.add(l); return l;};
 const PL={
   warmF:mkPL(0xFFB863,5.5,0,1.9,.7), warmB:mkPL(0xFFB863,5.5,0,1.9,-.5),
   vitF:mkPL(0xFFE9D2,3.2,-.9,1.0,.78), vitL:mkPL(0xFFE9D2,3.2,1.65,1.0,-.3),
@@ -319,7 +309,7 @@ function texLetreiro(wM,hM){
     // chave estilizada nas pontas
     const key=(x)=>{cx.save();cx.translate(x,h*.5);cx.strokeStyle='#2B2D2F';cx.lineWidth=h*.055;cx.lineCap='round';cx.beginPath();cx.arc(-h*.2,0,h*.11,0,Math.PI*2);cx.moveTo(-h*.09,0);cx.lineTo(h*.3,0);cx.moveTo(h*.18,0);cx.lineTo(h*.18,h*.12);cx.moveTo(h*.3,0);cx.lineTo(h*.3,h*.1);cx.stroke();cx.restore();};
     const gap=Math.min(w*.2,h*3.2); key(w/2-gap-h*1.6+h*.3); key(w/2+gap+h*1.6-h*.1);
-  });
+  },null,true);
 }
 function texLogo(){
   return canvasTex(1024,1024,(cx,w,h)=>{
@@ -343,13 +333,13 @@ function texLogo(){
         a+= (top?1:-1)*((ws[i]/2+sp)/R); });
     };
     arc('CHAVEIRO',372,true); arc('LIMA',414,false);
-  });
+  },null,true);
 }
 function texGrooves(){
   return canvasTex(2048,1229,(cx,w,h)=>{
-    cx.fillStyle='#F5F5F7'; cx.fillRect(0,0,w,h);
-    const step=w/4/ (1/0.08)*1; // ranhura a cada 8 cm (4 m = 2048 px)
-    for(let x=0;x<w;x+=41){ cx.fillStyle='rgba(60,64,70,.20)'; cx.fillRect(x,0,3,h); cx.fillStyle='rgba(255,255,255,.9)'; cx.fillRect(x+3,0,2,h); cx.fillStyle='rgba(60,64,70,.07)'; cx.fillRect(x-3,0,3,h); }
+    cx.fillStyle='#34373a'; cx.fillRect(0,0,w,h);
+    // ranhura a cada 8 cm (4 m = 2048 px)
+    for(let x=0;x<w;x+=41){ cx.fillStyle='rgba(0,0,0,.38)'; cx.fillRect(x,0,3,h); cx.fillStyle='rgba(255,255,255,.09)'; cx.fillRect(x+3,0,2,h); cx.fillStyle='rgba(0,0,0,.12)'; cx.fillRect(x-3,0,3,h); }
   });
 }
 function texCurtain(kind){
@@ -482,7 +472,7 @@ let logoMat, haloMat;
   const hook=new T.InstancedMesh(new T.CylinderGeometry(.004,.004,.04,6).rotateX(Math.PI/2),M.steel,n);
   const blade=new T.InstancedMesh(new T.BoxGeometry(.012,.052,.004),M.alu,n);
   const shell=new T.InstancedMesh(new T.BoxGeometry(.032,.05,.01),std(0xffffff,.55,.1),n);
-  const m4=new T.Matrix4(), col=new T.Color(), pal=[0x15171a,0x15171a,0x1f3a5c,0x6b1b24,0xD4A017,0x2c2e31,0x8d9298];
+  const m4=new T.Matrix4(), col=new T.Color(), pal=[0xD4A017,0xcfd3d8,0xb02a2a,0x2c6db4,0xe9eaec,0x8d9298,0xD4A017];
   pts.forEach(([x,y],i)=>{
     m4.makeTranslation(x,y,-1.098+.02); hook.setMatrixAt(i,m4);
     const k=(i*7)%5; if(k<3){ m4.makeTranslation(x,y-.045,-1.092); blade.setMatrixAt(i,m4); shell.setMatrixAt(i,new T.Matrix4().makeTranslation(x,y-.015,-1.085).multiply(new T.Matrix4().makeScale(.0001,.0001,.0001))); }
@@ -840,7 +830,7 @@ function tickTweens(dt){ for(let i=tweens.length-1;i>=0;i--){ const tw=tweens[i]
 let camTween=null;
 function goPreset(key,instant){
   const p=PRESETS[key]; if(!p) return;
-  const p0=camera.position.clone(), t0=controls.target.clone(), t1=new T.Vector3(...p.tgt), p1=new T.Vector3(...p.pos);
+  const p0=camera.position.clone(), t0=controls.target.clone(), t1=new T.Vector3(-p.tgt[0],p.tgt[1],p.tgt[2]), p1=new T.Vector3(-p.pos[0],p.pos[1],p.pos[2]);
   if(p.fit){ const fit=Math.max(1,1.7/camera.aspect); p1.sub(t1).multiplyScalar(fit).add(t1); }
   if(camTween){ const i=tweens.indexOf(camTween); if(i>=0) tweens.splice(i,1); }
   camTween=tween(instant?1:1300,k=>{ const e=ease(k); camera.position.lerpVectors(p0,p1,e); controls.target.lerpVectors(t0,t1,e); camera.lookAt(controls.target); dirty=true; });
@@ -852,7 +842,7 @@ const PRESETS={
   nicho:{pos:[.5,1.75,2.1],tgt:[.7,.7,-.85],fit:1},
   posto:{pos:[.9,1.85,1.0],tgt:[-1.65,.9,.1]},
   lateral:{pos:[5.3,1.85,.8],tgt:[1.9,.95,-.2],fit:1},
-  planta:{pos:[0,5.4,.06],tgt:[0,0,0],fit:1}
+  planta:{pos:[0,5.4,-.06],tgt:[0,0,0],fit:1}
 };
 canvas.addEventListener('pointerdown',()=>{ if(camTween){ const i=tweens.indexOf(camTween); if(i>=0) tweens.splice(i,1); camTween=null; } document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','false')); hideHint(); });
 
@@ -912,7 +902,7 @@ function renderBOM(){
     ['ex','Micro-exaustor de limalha',`${Q.exaustor} un`,'embutido no tampo da bancada de máquinas'],
     ['pts','Total de pontos',`${Q.t10+Q.t20+Q.cftv+Q.ir+Q.qgbt}`,`${Q.t10+Q.t20} tomadas, ${Q.cftv} CFTV, ${Q.ir} sensor, ${Q.qgbt} quadro`],
     ['Climatização · Opção A'],
-    ['nicho','Gabinete técnico 0,45 × 0,45 × 0,90 m',`${Q.nicho} un`,'MDF chumbo, porta veneziana de alumínio no corredor do operador'],
+    ['nicho','Gabinete técnico 0,45 × 0,45 × 0,90 m',`${Q.nicho} un`,'MDF cinza chumbo, porta veneziana de alumínio no corredor do operador'],
     ['eq','Equipamento',`1 un`,`${cooler}, exaustão por grelha no topo, tomada 20A interna`],
     ['Exposição'],
     ['ch','Chisteiras aveludadas',`${chTot} un`,`faixa 42 a 48 · relojoaria ${Q.chist[0]} · chaveiro ${Q.chist[1]} · outros ${Q.chist[2]}`],
@@ -922,8 +912,7 @@ function renderBOM(){
     ['led1','Perfil LED 4000K IRC>95 (vitrines)',`${fmt(Q.ledVit)} m`,'uma linha sobre cada fileira de chisteiras'],
     ['led2','Fita LED 3000K (sanca da testeira)',`${fmt(Q.ledSanca)} m`,'iluminação indireta quente'],
     ['led3','Halo LED branco do logo',`${fmt(Q.ledHalo)} m`,'contorno do disco preto'],
-    ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC)} m²`,'bases das vitrines, bancadas, nicho, porta e lateral esquerda'],
-    ['mb','MDF Branco',`${fmt(Q.mdfB)} m²`,'painel de fundo canaletado e forros das vitrines'],
+    ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC+Q.mdfB)} m²`,`${fmt(Q.mdfC)} m² de bases, bancadas, nicho e porta + ${fmt(Q.mdfB)} m² de painel de fundo canaletado, forros e fechamento lateral`],
     ['vd','Vidro temperado',`${fmt(Q.vidro)} m²`,'caixa 0,75 a 1,10 m e anteparo anti-limalha de 25 cm']
   ];
   let html='', first=true;
@@ -951,12 +940,25 @@ function mergeInstanced(im){
   const bg=new T.BufferGeometry(); bg.setAttribute('position',new T.BufferAttribute(P,3)); bg.setAttribute('normal',new T.BufferAttribute(N,3)); bg.setAttribute('color',new T.BufferAttribute(Cc,3)); bg.setIndex(new T.BufferAttribute(I,1));
   const mat=im.material.clone(); mat.vertexColors=true; return new T.Mesh(bg,mat);
 }
-function toExport(o){
-  if(!o.visible||o.userData.keep||o.userData.noExport||o.isSprite||o.isLine||o.isLight) return null;
-  let e;
-  if(o.isInstancedMesh) e=mergeInstanced(o); else if(o.isMesh) e=new T.Mesh(o.geometry,o.material); else e=new T.Group();
-  e.name=o.name; e.position.copy(o.position); e.quaternion.copy(o.quaternion); e.scale.copy(o.scale);
-  o.children.forEach(c=>{const k=toExport(c); if(k) e.add(k);}); return e;
+function toExport(root0){
+  // achata a cena: aplica a matriz de mundo (com o espelho em X) na geometria, inverte o sentido das faces e desfaz o flip de UV
+  const out=new T.Group(); out.name=root0.name; const matCache=new Map();
+  const fixMat=m=>{ if(Array.isArray(m)) return m.map(fixMat); if(!m.map||m.map.repeat.x!==-1) return m;
+    if(matCache.has(m)) return matCache.get(m); const c=m.clone(); c.map=m.map.clone(); c.map.repeat.set(1,1); c.map.offset.set(0,0); c.map.needsUpdate=true;
+    if(c.emissiveMap) c.emissiveMap=c.map; matCache.set(m,c); return c; };
+  const walk=(o,pm)=>{
+    if(!o.visible||o.userData.keep||o.userData.noExport||o.isSprite||o.isLine||o.isLight) return;
+    o.updateMatrix(); const wm=pm.clone().multiply(o.matrix);
+    if(o.isMesh){
+      let src=o.isInstancedMesh?mergeInstanced(o):o; const g=src.geometry.clone(); g.applyMatrix4(wm);
+      if(wm.determinant()<0 && g.index){ const ix=g.index.array; for(let i=0;i<ix.length;i+=3){ const t=ix[i+1]; ix[i+1]=ix[i+2]; ix[i+2]=t; } }
+      const mats=src.material, flip=(Array.isArray(mats)?mats:[mats]).some(m=>m.map&&m.map.repeat.x===-1);
+      if(flip&&g.attributes.uv){ const uv=g.attributes.uv; for(let i=0;i<uv.count;i++) uv.setX(i,1-uv.getX(i)); }
+      const e=new T.Mesh(g,fixMat(mats)); e.name=o.name||'mesh'; out.add(e);
+    }
+    o.children.forEach(c=>walk(c,wm));
+  };
+  walk(root0,new T.Matrix4()); return out;
 }
 function buildGLTF(){
   const exp=toExport(root); exp.name=root.name;
