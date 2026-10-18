@@ -189,7 +189,9 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Seções:</b> 30 / 50 / 20 % é a divisão comercial do mix. Os comprimentos físicos são 1,70 m, 2,30 m (frente) e 1,70 m (lateral).</li>
         <li><b>Bancada do relojoeiro:</b> 1,60 m nominais, sendo 0,60 m o módulo de canto da vitrine. O comprimento livre de trabalho é 1,00 m.</li>
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
-        <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m, com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar. A cortina noturna cobre só a frente e a lateral da vitrine em L, então esse vão de 0,75 m de altura fica sem fechamento à noite.</li>
+        <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar. A cortina noturna cobre só a frente e a lateral da vitrine em L, então esse vão fica sem fechamento à noite.</li>
+        <li><b>Madeira ripada</b> reveste a base da vitrine em L, o fundo e o mini painel do relojoeiro, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
+        <li><b>PDV removido</b> junto com as 4 tomadas 10A e o circuito 3. O circuito 4 manteve o número.</li>
         <li><b>Áreas</b> são líquidas, sem perda de corte. A cortina mostra também a compra com 8 % de sobra para dobra e sobreposição.</li>
         <li><b>Exportar GLTF</b> salva o estado atual da cena em JSON, já com o espelhamento aplicado. Renomeie o arquivo de <code>.gltf.json</code> para <code>.gltf</code>.</li>
       </ul>
@@ -213,7 +215,7 @@ const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 
 /* ---------- acumuladores do BOM (preenchidos pela própria geometria) ---------- */
 const Q={};
-(function reset(){Object.assign(Q,{metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,ir:0,qgbt:0,cofre:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
+(function reset(){Object.assign(Q,{ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,ir:0,qgbt:0,cofre:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
 
 const S={night:false,closed:false,infra:false,dims:false,closure:'micro',density:'max',cooler:'portatil'};
 
@@ -288,7 +290,7 @@ const glowMats=[], ledMats=[M.ledCool,M.ledWarm,M.ledWhite];
 
 /* ---------- grupos ---------- */
 const root=new T.Group(); root.name='Quiosque Chaveiro Lima'; root.scale.x=-1; scene.add(root); // espelhado em X: bancada do relojoeiro à direita de quem olha a fachada
-const G={}; ['struct','test','back','mach','nicho','left','vit','trays','pdv','elec','cftv','curt','glow','neon','dims'].forEach(n=>G[n]=grp(n));
+const G={}; ['struct','test','back','mach','nicho','left','vit','trays','wood','elec','cftv','curt','glow','neon','dims'].forEach(n=>G[n]=grp(n));
 G.neon.userData.keep=true; G.dims.userData.keep=true; G.glow.userData.keep=true; G.neon.visible=false; G.dims.visible=false;
 G.trays.userData.noExport=false;
 
@@ -394,7 +396,7 @@ function glow(color,size,x,y,z,base){
 }
 
 /* ---------- tomadas ---------- */
-const NEON={C1:0xFF7A00,C2:0x00E5FF,C3:0xA6FF00,C4:0xFFE600,AR:0xFF2BD6,CFTV:0xFF2D55,IR:0xA66BFF,COFRE:0x4D9DFF};
+const NEON={C1:0xFF7A00,C2:0x00E5FF,C4:0xFFE600,AR:0xFF2BD6,CFTV:0xFF2D55,IR:0xA66BFF,COFRE:0x4D9DFF};
 const neonMats={}; const nm=(c,op)=>neonMats[c+'_'+op]||(neonMats[c+'_'+op]=new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:op,depthTest:false,depthWrite:false,toneMapped:false}));
 function neon(c,x0,x1,y0,y1,z0,z1,op){
   const m=bx(G.neon,nm(c,op==null?.55:op),x0,x1,y0,y1,z0,z1); m.renderOrder=12; return m;
@@ -564,8 +566,8 @@ let coolerPortatil, coolerClimat;
 (function buildLeft(){
   const g=G.left, t=.04;
   // mini painel do posto de relógios: MDF cinza chumbo até 1,30 m; acima fica aberto (sem vidro) para ventilar
-  sheet(g,'c',XL,XL+.015,0.04,PAINEL_H-.04,-.45,ZF-.04); sheet(g,'b',XL+.015,XL+.035,0.04,PAINEL_H-.04,-.45,ZF-.04);
-  mt(g,XL,XL+.04,PAINEL_H-.04,PAINEL_H,-.45,ZF-.04);
+  sheet(g,'c',XL+.02,XL+.035,0.04,PAINEL_H-.04,-.45,.55);
+  mt(g,XL,XL+.04,PAINEL_H-.04,PAINEL_H,-.45,.55);
   // porta portinhola de 70 cm com friso mostarda e fechadura
   const d=grp('Portinhola',g);
   mt(d,XL,XL+t,0,.04,ZB+t,-.49); mt(d,XL,XL+t,1.96,2.0,ZB+t,-.49);
@@ -610,7 +612,7 @@ const VEL=[0x1f2d4a,0x4a1822,0x1c3b33];
   defs.forEach(d=>{
     const g=grp('Vitrine '+d.id,G.vit); g.position.set(...d.pos); g.rotation.y=d.ry; RUNS[d.id]=g;
     const {x0,x1}=d, L=x1-x0;
-    mdf(g,'c',x0,x1,.10,.75,-VD,0);
+    mdf(g,'c',x0+(d.id==='F'?.02:0),x1-.02,.10,.75,-VD,-.02); // recuo de 2 cm nas faces externas: as ripas ficam alinhadas ao vidro
     // portas de correr internas para estoque (lado do operador)
     const inner=d.id==='F'?(d.innerEnd-x0):L, nPortas=Math.max(1,Math.round(inner/.85)), wD=inner/nPortas;
     for(let i=0;i<nPortas;i++){ const a=x0+i*wD+.03; bx(g,std(0x44484c,.7,.1),a,a+wD-.06,.16,.69,-VD-.004,-VD); bx(g,M.dark,a+wD*.5-.012,a+wD*.5+.012,.32,.52,-VD-.008,-VD-.004); Q.portas++; }
@@ -627,6 +629,37 @@ const VEL=[0x1f2d4a,0x4a1822,0x1c3b33];
   // pequenos halos de LED
   for(let x=-1.7;x<=1.8;x+=.85){ glow(0xFFE9D2,.5,x,CTR-.03,ZF-.2,.5); }
   for(let z=.2;z>=-1.0;z-=.6){ glow(0xFFE9D2,.5,XR-.2,CTR-.03,z,.5); }
+})();
+
+
+/* ================= MADEIRA RIPADA (base ao redor do quiosque) ================= */
+function texWood(){
+  return canvasTex(128,256,(cx,w,h)=>{
+    cx.fillStyle='#c4925c'; cx.fillRect(0,0,w,h);
+    let seed=7; const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+    for(let i=0;i<70;i++){ const x=rnd()*w, l=h*(.4+rnd()*.6), y=rnd()*(h-l); cx.strokeStyle=rnd()<.5?'rgba(90,52,24,'+(.1+rnd()*.18)+')':'rgba(255,225,180,'+(.06+rnd()*.1)+')'; cx.lineWidth=.6+rnd()*1.6; cx.beginPath(); cx.moveTo(x,y); cx.lineTo(x+(rnd()-.5)*3,y+l); cx.stroke(); }
+    for(let k=0;k<2;k++){ const x=20+rnd()*88, y=20+rnd()*216; cx.strokeStyle='rgba(80,45,20,.28)'; cx.lineWidth=1.2; for(let r=3;r<9;r+=2){ cx.beginPath(); cx.ellipse(x,y,r*.7,r*1.8,0,0,Math.PI*2); cx.stroke(); } }
+  });
+}
+(function buildWood(){
+  const g=G.wood, W=.035, P=.05, D=.02;
+  const mat=std(0xffffff,.62,0,{map:texWood()}), geo=new T.BoxGeometry(1,1,1), list=[];
+  // faixa de ripas verticais: eixo 'x' (faces de frente e fundo) ou 'z' (laterais); c = centro da ripa no eixo da profundidade
+  const run=(axis,a0,a1,c,y0,y1,skip)=>{
+    const n=Math.floor((a1-a0)/P), off=(a1-a0-n*P)/2;
+    for(let i=0;i<n;i++){ const p=a0+off+i*P+P/2; if(skip&&p>skip[0]&&p<skip[1]) continue;
+      list.push(axis==='x'?[p,(y0+y1)/2,c,W,y1-y0,D]:[c,(y0+y1)/2,p,D,y1-y0,W]); Q.ripaM+=y1-y0; Q.ripaA+=P*(y1-y0); }
+  };
+  run('x',XL+.045,XR-.045,ZF-D/2,.10,.75,[-.34,-.26]);        // frente (clientes)
+  run('x',XL+.045,XR-.045,ZB+D/2,.10,.75);                    // fundo
+  run('z',ZB+.045,ZF-.045,XR-D/2,.10,.75);                    // lateral da vitrine em L
+  run('z',-.43,.53,XL+D/2,.04,PAINEL_H-.04);                  // mini painel do posto de relógios
+  run('z',.57,ZF-.045,XL+D/2,.10,.75);                        // lateral do módulo de canto (Relojoaria)
+  const im=new T.InstancedMesh(geo,mat,list.length), m=new T.Matrix4(), q=new T.Quaternion(), pos=new T.Vector3(), sc=new T.Vector3(), c=new T.Color();
+  const tones=[1,.93,.86,.97,.9];
+  list.forEach((r,i)=>{ pos.set(r[0],r[1],r[2]); sc.set(r[3],r[4],r[5]); m.compose(pos,q,sc); im.setMatrixAt(i,m); const t=tones[(i*7+3)%5]; im.setColorAt(i,c.setRGB(t,t*.97,t*.92)); });
+  im.instanceMatrix.needsUpdate=true; im.instanceColor.needsUpdate=true; im.name='Madeira ripada'; im.castShadow=true; im.receiveShadow=true; g.add(im);
+  Q.ripas=list.length;
 })();
 
 /* ---------- chisteiras e mostruário (reconstruídas conforme a densidade) ---------- */
@@ -685,18 +718,6 @@ function buildTrays(){
   collectGhost();
 }
 
-/* ================= PDV / CAIXA ================= */
-(function buildPDV(){
-  const g=G.pdv, y=.86, z1=.55, z0=.16;
-  mt(g,.2,1.1,y-.02,y,z0,z1); bx(g,M.metal,.2,1.1,y,y+.025,z0,z1);
-  // monitor, impressora térmica, maquininhas
-  bx(g,M.dark,.28,.62,y+.1,y+.30,.34,.37); bx(g,M.dark,.43,.47,y+.025,y+.1,.34,.38); bx(g,std(0x1e2a3a,.2,.3),.29,.61,y+.11,y+.29,.372,.376);
-  bx(g,M.dark,.72,.88,y+.025,y+.1,.3,.46); bx(g,std(0xdcdfe2,.5,.1),.74,.86,y+.1,y+.105,.3,.4);
-  bx(g,M.dark,.95,1.02,y+.025,y+.04,.38,.50); bx(g,M.dark,1.03,1.09,y+.025,y+.04,.28,.40);
-  // 4 tomadas 10A abaixo da prateleira, na face interna da base
-  [.35,.55,.75,.95].forEach(x=>socket(g,10,x,.66,z1-.002,'z-','C3'));
-})();
-
 /* ================= QGBT E CFTV ================= */
 (function buildElec(){
   const g=G.elec;
@@ -728,7 +749,6 @@ function buildTrays(){
   const q=[-1.70,1.55,-1.08]; // QGBT
   route(NEON.C1,[[-1.70,1.45,-1.12],[-1.70,1.27,-1.12],[-.66,1.27,-1.12]]);
   route(NEON.C2,[[-1.78,1.50,-1.12],[-1.94,1.50,-1.12],[-1.94,1.50,-.45],[-1.94,1.08,-.45],[-1.94,1.08,.45]]);
-  route(NEON.C3,[[-1.74,1.42,-1.12],[-1.74,.07,-1.12],[-1.74,.07,-.55],[.60,.07,-.55],[.60,.07,.52],[.60,.66,.52]]);
   route(NEON.C4,[[-1.66,1.78,-1.11],[-1.66,2.03,-1.11],[1.94,2.03,-1.11],[1.94,2.03,1.08],[-1.94,2.03,1.08],[-1.94,2.03,-1.0]]);
   route(NEON.C4,[[-.30,2.03,1.08],[-.30,1.07,1.08]]); route(NEON.C4,[[1.94,2.03,1.08],[1.94,1.07,1.08]]);
   route(NEON.C4,[[1.94,2.03,.4],[1.94,1.07,.4]]);
@@ -741,7 +761,6 @@ function buildTrays(){
   // etiquetas
   tag('C1 · 6× 20A · motores + micro-exaustor',-.5,1.72,-1.0,NEON.C1);
   tag('C2 · 4× 10A · relojoeiro',-1.9,1.38,.1,NEON.C2);
-  tag('C3 · 4× 10A · PDV',.75,.55,.45,NEON.C3);
   tag('C4 · QGBT · DR 30 mA + DPS',-1.7,1.9,-1.0,NEON.C4);
   tag('Opção A · 20A dedicada',1.18,1.0,-.7,NEON.AR);
   tag('CFTV dome ×2',-1.4,2.15,-.9,NEON.CFTV);
@@ -922,7 +941,7 @@ function updateView(){
 }
 
 /* legenda dos circuitos */
-$('#legend').innerHTML=[['C1','Circuito 1 · motores do chaveiro, 6× 20A'],['C2','Circuito 2 · bancada do relojoeiro, 4× 10A'],['C3','Circuito 3 · PDV, 4× 10A'],['C4','Circuito 4 · QGBT, DR 30 mA, DPS, fontes LED'],['AR','Opção A · tomada 20A do nicho e fluxo de ar'],['CFTV','CFTV · 2 câmeras dome'],['IR','Sensor de presença infravermelho'],['COFRE','Cofre chumbado']]
+$('#legend').innerHTML=[['C1','Circuito 1 · motores do chaveiro, 6× 20A'],['C2','Circuito 2 · bancada do relojoeiro, 4× 10A'],['C4','Circuito 4 · QGBT, DR 30 mA, DPS, fontes LED'],['AR','Opção A · tomada 20A do nicho e fluxo de ar'],['CFTV','CFTV · 2 câmeras dome'],['IR','Sensor de presença infravermelho'],['COFRE','Cofre chumbado']]
   .map(([k,t])=>{const c='#'+('000000'+NEON[k].toString(16)).slice(-6); return `<li><i style="background:${c};color:${c}"></i>${t}</li>`;}).join('');
 
 /* ================= BOM ================= */
@@ -940,7 +959,7 @@ function renderBOM(){
     ['cofre','Cofre blindado chumbado',`${Q.cofre} un`,'no piso, sob a bancada traseira de máquinas'],
     ['Pontos elétricos'],
     ['t20','Tomadas 20A',`${Q.t20} un`,'6 industriais (motores) + 1 dedicada do nicho'],
-    ['t10','Tomadas 10A',`${Q.t10} un`,'4 relojoeiro + 4 PDV'],
+    ['t10','Tomadas 10A',`${Q.t10} un`,'4 do posto do relojoeiro'],
     ['dr','Quadro QGBT com DR 30 mA e DPS',`${Q.qgbt} un`,'perto da porta de entrada; circuito 4 alimenta LEDs'],
     ['ex','Micro-exaustor de limalha',`${Q.exaustor} un`,'embutido no tampo da bancada de máquinas'],
     ['pts','Total de pontos',`${Q.t10+Q.t20+Q.cftv+Q.ir+Q.qgbt}`,`${Q.t10+Q.t20} tomadas, ${Q.cftv} CFTV, ${Q.ir} sensor, ${Q.qgbt} quadro`],
@@ -955,6 +974,7 @@ function renderBOM(){
     ['led1','Perfil LED 4000K IRC>95 (vitrines)',`${fmt(Q.ledVit)} m`,'uma linha sobre cada fileira de chisteiras'],
     ['led2','Fita LED 3000K (sanca da testeira)',`${fmt(Q.ledSanca)} m`,'iluminação indireta quente'],
     ['led3','Halo LED branco do logo',`${fmt(Q.ledHalo)} m`,'contorno do disco preto'],
+    ['rp','Madeira ripada (ripas 35 × 20 mm)',`${fmt(Q.ripaA)} m²`,`${Q.ripas} ripas verticais · ${fmt(Q.ripaM)} m lineares, vão de 15 mm sobre o chumbo · compra com 10 % de perda: ${fmt(Q.ripaA*1.1)} m²`],
     ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC+Q.mdfB)} m²`,`${fmt(Q.mdfC)} m² de bases, bancadas, nicho e porta + ${fmt(Q.mdfB)} m² de painel de fundo canaletado, forros e mini painel do relojoeiro`],
     ['vd','Vidro temperado',`${fmt(Q.vidro)} m²`,'caixa 0,75 a 1,10 m e anteparo anti-limalha de 25 cm']
   ];
@@ -980,7 +1000,8 @@ function mergeInstanced(im){
       Cc[o]=col.r;Cc[o+1]=col.g;Cc[o+2]=col.b; }
     for(let k=0;k<ic;k++) I[i*ic+k]=(idx?idx.getX(k):k)+i*vc;
   }
-  const bg=new T.BufferGeometry(); bg.setAttribute('position',new T.BufferAttribute(P,3)); bg.setAttribute('normal',new T.BufferAttribute(N,3)); bg.setAttribute('color',new T.BufferAttribute(Cc,3)); bg.setIndex(new T.BufferAttribute(I,1));
+  const bg=new T.BufferGeometry(); bg.setAttribute('position',new T.BufferAttribute(P,3)); bg.setAttribute('normal',new T.BufferAttribute(N,3)); if(g.attributes.uv){ const U=new Float32Array(vc*n*2); for(let i=0;i<n;i++) U.set(g.attributes.uv.array,i*vc*2); bg.setAttribute('uv',new T.BufferAttribute(U,2)); }
+  bg.setAttribute('color',new T.BufferAttribute(Cc,3)); bg.setIndex(new T.BufferAttribute(I,1));
   const mat=im.material.clone(); mat.vertexColors=true; return new T.Mesh(bg,mat);
 }
 function toExport(root0){
