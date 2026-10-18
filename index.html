@@ -237,7 +237,7 @@ const scene=new T.Scene();
 const SKY_DAY=new T.Color(0xcfdfec), SKY_NIGHT=new T.Color(0x070b14);
 scene.background=SKY_DAY.clone(); scene.fog=new T.Fog(SKY_DAY.clone().convertSRGBToLinear(),16,46);
 const camera=new T.PerspectiveCamera(38,1,0.08,90);
-camera.position.set(-0.5,2.1,5.5);
+camera.position.set(-0.5,1.8,5.5);
 const controls=new T.OrbitControls(camera,canvas);
 controls.target.set(0,1.05,0.4);
 controls.enableDamping=true; controls.dampingFactor=0.09;
@@ -306,7 +306,7 @@ const mkPL=(c,d,x,y,z)=>{const l=new T.PointLight(c,0,d,2); l.position.set(x,y,z
 const PL={
   warmF:mkPL(0xFFB863,5.5,0,1.9,.7), warmB:mkPL(0xFFB863,5.5,0,1.9,-.5),
   vitF:mkPL(0xFFE9D2,3.2,-.9,1.0,.78), vitL:mkPL(0xFFE9D2,3.2,1.65,1.0,-.3),
-  logo:mkPL(0xffffff,3.2,0,1.85,-.7), lamp:mkPL(0xffffff,1.8,-1.55,1.28,.1)
+  logo:mkPL(0xffffff,3.6,0,1.95,-.25), lamp:mkPL(0xffffff,1.8,-1.55,1.28,.1)
 };
 
 /* ---------- texturas ---------- */
@@ -455,7 +455,7 @@ const rollers=[]; // {mesh}
   roll(1.67,'x',-1.155,2.22,ZF-.06); roll(2.23,'x',.835,2.22,ZF-.06); roll(2.1,'z',XR-.06,2.22,-.05);
   // sanca indireta 3000K sob a testeira (face interna)
   const strip=(x0,x1,z0,z1)=>{bx(g,M.ledWarm,x0,x1,TY0-.012,TY0,z0,z1); Q.ledSanca+=Math.max(x1-x0,z1-z0);};
-  strip(XL+.12,XR-.12,ZF-th,ZF-th+.012); strip(XR-th,XR-th+.012,ZB+.04,ZF-th); strip(XL+th-.012,XL+th,ZB+.04,ZF-th); strip(XL+.12,XR-.12,ZB+.08,ZB+.092);
+  strip(XL+.12,XR-.12,ZF-th,ZF-th+.012); strip(XR-th,XR-th+.012,ZB+.04,ZF-th); strip(XL+th-.012,XL+th,ZB+.04,ZF-th); strip(XL+.12,-.55,ZB+.08,ZB+.092); strip(.55,XR-.12,ZB+.08,ZB+.092); // sanca do fundo interrompida atrás do logo
   // halos aditivos da sanca
   for(let x=-1.6;x<=1.7;x+=.8) glow(0xFFB863,.9,x,TY0-.08,ZF-th-.03,.55);
   for(let z=.6;z>=-.9;z-=.75) glow(0xFFB863,.9,XR-th-.03,TY0-.08,z,.5);
@@ -469,14 +469,14 @@ let logoMat, haloMat;
   const panel=new T.Mesh(new T.BoxGeometry(4,H,.03),[M.mdfB,M.mdfB,M.mdfB,M.mdfB,pm,M.mdfB]); panel.position.set(0,H/2,-1.115); g.add(panel);
   Q.mdfB+=4*H;
   // logo circular com halo
-  const lg=grp('logo',g); lg.position.set(0,1.85,-1.095);
-  logoMat=std(0xffffff,.5,.1,{map:texLogo(),emissive:new T.Color(0xffffff),emissiveIntensity:.25}); logoMat.emissiveMap=logoMat.map;
-  const disc=new T.Mesh(new T.CircleGeometry(.38,64),logoMat); disc.position.z=.016; lg.add(disc);
-  const rim=new T.Mesh(new T.CylinderGeometry(.395,.395,.028,64),std(0x0b0b0c,.5,.3)); rim.rotation.x=Math.PI/2; rim.position.z=.002; lg.add(rim);
+  const lg=grp('logo',g); lg.position.set(0,1.85,-1.095); lg.scale.setScalar(.87); // disco de 66 cm: cabe abaixo da linha da testeira vista da rua
+  logoMat=new T.MeshBasicMaterial({map:texLogo(),toneMapped:false}); // sem iluminação: o disco fica preto e o lettering e a chave ficam acesos, sem lavar com as luzes do quiosque
+  const disc=new T.Mesh(new T.CircleGeometry(.38,64),logoMat); disc.position.z=.024; lg.add(disc); // 8 mm à frente da tampa do aro: evita z-fighting entre os dois
+  const rim=new T.Mesh(new T.CylinderGeometry(.395,.395,.02,64),std(0x0b0b0c,.6,.2)); rim.rotation.x=Math.PI/2; rim.position.z=.006; lg.add(rim);
   haloMat=new T.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.45,toneMapped:false});
   const ring=new T.Mesh(new T.RingGeometry(.40,.47,64),haloMat); ring.position.z=.002; lg.add(ring);
-  Q.ledHalo+=2*Math.PI*.435;
-  glow(0xffffff,2.1,0,1.85,-1.05,.9);
+  Q.ledHalo+=2*Math.PI*.435*.87;
+  glow(0xffffff,1.9,0,1.85,-1.097,.7); // atrás do disco e do halo, só lava a parede
   // ganchos com chaves e carcaças
   const pts=[]; for(let y=1.50;y<=2.0;y+=.125) for(let x=-1.92;x<=1.92;x+=.13){ if(Math.abs(x)<.60) continue; if(Math.abs(x+1.7)<.24&&Math.abs(y-1.58)<.30) continue; pts.push([x,y]); }
   const n=pts.length;
@@ -846,9 +846,9 @@ function applyNight(t){
   hemi.intensity=lerp(.95,.34,t); hemi.color.lerpColors(new T.Color(0xffffff),new T.Color(0x5c78b8),t); hemi.groundColor.lerpColors(new T.Color(0x8a8d90),new T.Color(0x0b0c10),t);
   sun.intensity=lerp(1.15,0,t); moon.intensity=lerp(0,.3,t);
   const k=lerp(.18,1,t);
-  PL.warmF.intensity=2.0*k; PL.warmB.intensity=1.6*k; PL.vitF.intensity=1.5*k; PL.vitL.intensity=1.2*k; PL.logo.intensity=1.6*k; PL.lamp.intensity=1.0*k;
+  PL.warmF.intensity=2.0*k; PL.warmB.intensity=1.6*k; PL.vitF.intensity=1.5*k; PL.vitL.intensity=1.2*k; PL.logo.intensity=1.3*k; PL.lamp.intensity=1.0*k;
   ledMats.forEach(m=>m.emissiveIntensity=lerp(.9,2.8,t));
-  M.lampHead.emissiveIntensity=lerp(.2,2.6,t); logoMat.emissiveIntensity=lerp(.22,1.25,t); haloMat.opacity=lerp(.5,1,t);
+  M.lampHead.emissiveIntensity=lerp(.2,2.6,t); logoMat.color.setScalar(lerp(.8,1,t)); haloMat.opacity=lerp(.5,1,t);
   glowMats.forEach(m=>m.opacity=m.userData.base*lerp(.12,1,t)*(S.closed?1:1));
   M.ground.color.setScalar(lerp(1,.38,t));
   renderer.toneMappingExposure=lerp(1,1.12,t);
@@ -869,7 +869,7 @@ function goPreset(key,instant){
   if(key==='planta' && !S.dims) setDims(true);
 }
 const PRESETS={
-  fachada:{pos:[.5,2.1,5.5],tgt:[0,1.0,.4],fit:1},
+  fachada:{pos:[.5,1.8,5.5],tgt:[0,1.05,.4],fit:1},
   nicho:{pos:[.5,1.75,2.1],tgt:[.7,.7,-.85],fit:1},
   posto:{pos:[.9,1.85,1.0],tgt:[-1.65,.9,.1]},
   lateral:{pos:[5.3,1.85,.8],tgt:[1.9,.95,-.2],fit:1},
