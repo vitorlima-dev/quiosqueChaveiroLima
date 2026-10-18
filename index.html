@@ -190,7 +190,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Bancada do relojoeiro:</b> 1,60 m nominais, sendo 0,60 m o módulo de canto da vitrine. O comprimento livre de trabalho é 1,00 m.</li>
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar. A cortina noturna cobre só a frente e a lateral da vitrine em L, então esse vão fica sem fechamento à noite.</li>
-        <li><b>Madeira ripada</b> reveste a base da vitrine em L, o fundo e o mini painel do relojoeiro, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
+        <li><b>Madeira ripada</b> reveste a base da vitrine em L, o módulo de canto e o mini painel do relojoeiro. O fundo, onde ficam as chaves, é uma parede lisa e fosca em cinza chumbo, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
         <li><b>PDV removido</b> junto com as 4 tomadas 10A e o circuito 3. O circuito 4 manteve o número.</li>
         <li><b>Áreas</b> são líquidas, sem perda de corte. A cortina mostra também a compra com 8 % de sobra para dobra e sobreposição.</li>
         <li><b>Exportar GLTF</b> salva o estado atual da cena em JSON, já com o espelhamento aplicado. Renomeie o arquivo de <code>.gltf.json</code> para <code>.gltf</code>.</li>
@@ -351,13 +351,6 @@ function texLogo(){
     arc('CHAVEIRO',372,true); arc('LIMA',414,false);
   },null,true);
 }
-function texGrooves(){
-  return canvasTex(2048,1229,(cx,w,h)=>{
-    cx.fillStyle='#34373a'; cx.fillRect(0,0,w,h);
-    // ranhura a cada 8 cm (4 m = 2048 px)
-    for(let x=0;x<w;x+=41){ cx.fillStyle='rgba(0,0,0,.38)'; cx.fillRect(x,0,3,h); cx.fillStyle='rgba(255,255,255,.09)'; cx.fillRect(x+3,0,2,h); cx.fillStyle='rgba(0,0,0,.12)'; cx.fillRect(x-3,0,3,h); }
-  });
-}
 function texCurtain(kind){
   return canvasTex(256,256,(cx,w,h)=>{
     if(kind==='micro'){
@@ -470,7 +463,7 @@ const rollers=[]; // {mesh}
 let logoMat, haloMat;
 (function buildBack(){
   const g=G.back;
-  const pm=std(0xffffff,.85,0,{map:texGrooves()});
+  const pm=std(0x34373a,.96,0); // parede lisa e fosca, para destacar as chaves
   const panel=new T.Mesh(new T.BoxGeometry(4,H,.03),[M.mdfB,M.mdfB,M.mdfB,M.mdfB,pm,M.mdfB]); panel.position.set(0,H/2,-1.115); g.add(panel);
   Q.mdfB+=4*H;
   // logo circular com halo
@@ -651,7 +644,6 @@ function texWood(){
       list.push(axis==='x'?[p,(y0+y1)/2,c,W,y1-y0,D]:[c,(y0+y1)/2,p,D,y1-y0,W]); Q.ripaM+=y1-y0; Q.ripaA+=P*(y1-y0); }
   };
   run('x',XL+.045,XR-.045,ZF-D/2,.10,.75,[-.34,-.26]);        // frente (clientes)
-  run('x',XL+.045,XR-.045,ZB+D/2,.10,.75);                    // fundo
   run('z',ZB+.045,ZF-.045,XR-D/2,.10,.75);                    // lateral da vitrine em L
   run('z',-.43,.53,XL+D/2,.04,PAINEL_H-.04);                  // mini painel do posto de relógios
   run('z',.57,ZF-.045,XL+D/2,.10,.75);                        // lateral do módulo de canto (Relojoaria)
@@ -975,7 +967,7 @@ function renderBOM(){
     ['led2','Fita LED 3000K (sanca da testeira)',`${fmt(Q.ledSanca)} m`,'iluminação indireta quente'],
     ['led3','Halo LED branco do logo',`${fmt(Q.ledHalo)} m`,'contorno do disco preto'],
     ['rp','Madeira ripada (ripas 35 × 20 mm)',`${fmt(Q.ripaA)} m²`,`${Q.ripas} ripas verticais · ${fmt(Q.ripaM)} m lineares, vão de 15 mm sobre o chumbo · compra com 10 % de perda: ${fmt(Q.ripaA*1.1)} m²`],
-    ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC+Q.mdfB)} m²`,`${fmt(Q.mdfC)} m² de bases, bancadas, nicho e porta + ${fmt(Q.mdfB)} m² de painel de fundo canaletado, forros e mini painel do relojoeiro`],
+    ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC+Q.mdfB)} m²`,`${fmt(Q.mdfC)} m² de bases, bancadas, nicho e porta + ${fmt(Q.mdfB)} m² de painel de fundo liso, forros e mini painel do relojoeiro`],
     ['vd','Vidro temperado',`${fmt(Q.vidro)} m²`,'caixa 0,75 a 1,10 m e anteparo anti-limalha de 25 cm']
   ];
   let html='', first=true;
