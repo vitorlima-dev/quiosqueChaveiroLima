@@ -199,6 +199,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Bancada do relojoeiro:</b> 1,60 m nominais, sendo 0,60 m o módulo de canto da vitrine. O comprimento livre de trabalho é 1,00 m.</li>
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine e 1,00 m sobre o mini painel. Um poste de metalon em z = 0,55 m divide os dois.</li>
+        <li><b>Pilar central retirado:</b> a frente não tem mais o pilar intermediário de metalon (x = -0,30 m), então a testeira vence os 4,00 m só apoiada nos cantos. A persiana da frente passou a ser um rolo único de 4,00 m, com duas guias. As seções Relojoaria e Chaveiro seguem separadas só no mostruário. Vale o cálculo do seu serralheiro: a testeira carrega as caixas de recolhimento e a sanca, e um vão de 4 m pode flechar.</li>
         <li><b>Loja fechada:</b> o vidro da vitrine recuou 6 cm da face externa, e as persianas descem nesse canal até o tampo da base de madeira (0,76 m), cobrindo o vidro e os produtos. Nos cantos as persianas se cruzam e a porta sobe até a travessa de topo, sem fresta. Conferi por traçado de raios, de 3,2 e 5 m de distância e de 0,7 a 2,0 m de altura, a cada 6°: nenhum dos 632 pontos de produto testados aparece. A cobertura do quiosque não está modelada, então a verificação vale para quem olha de fora na altura da rua.</li>
         <li><b>Madeira ripada</b> reveste a base da vitrine em L, o módulo de canto e o mini painel do relojoeiro. O fundo, onde ficam as chaves, é uma parede lisa e fosca em cinza chumbo, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
         <li><b>Mobiliário ilustrativo:</b> a cadeira de escritório (relojoeiro) e a banqueta (segundo funcionário, de frente para o balcão do chaveiro) servem só para ver a escala humana. Ficam fora da lista de materiais e dá para ocultá-las no botão do painel. A cadeira encosta na bancada com o assento a 0,56 m, e o tampo da bancada está a 0,95 m, então ela precisa ficar na altura máxima.</li>
@@ -446,7 +447,7 @@ const pane=(par,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,M.glass,x0,x1,y0,y1,z0,z1); 
   // pilares de canto (sobem até a testeira)
   mt(g,XL,XL+t,0,TY0,ZF-t,ZF); mt(g,XR-t,XR,0,TY0,ZF-t,ZF); mt(g,XL,XL+t,0,TY0,ZB,ZB+t); mt(g,XR-t,XR,0,TY0,ZB,ZB+t);
   // pilar intermediário da frente (separa Relojoaria / Chaveiro) e batente da porta
-  mt(g,-.32,-.28,0,TY0,ZF-t,ZF); mt(g,XL,XL+t,0,TY0,-.49,-.45);
+  mt(g,XL,XL+t,0,TY0,-.49,-.45); // batente da porta (o pilar central da frente foi retirado; a testeira vence os 4,00 m sem apoio)
   // quadros de piso e de topo
   [[XL,XR,0,.04,ZF-t,ZF],[XL,XR,0,.04,ZB,ZB+t],[XL,XL+t,0,.04,ZB,ZF],[XR-t,XR,0,.04,ZB,ZF]].forEach(a=>mt(g,...a));
   [[XL,XR,TY0-.04,TY0,ZF-t,ZF],[XL,XR,TY0-.04,TY0,ZB,ZB+t],[XL,XL+t,TY0-.04,TY0,ZB,ZF],[XR-t,XR,TY0-.04,TY0,ZB,ZF]].forEach(a=>mt(g,...a));
@@ -457,7 +458,7 @@ const pane=(par,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,M.glass,x0,x1,y0,y1,z0,z1); 
   const guideMat=std(0x45494d,.4,.7);
   const guide=(x0,x1,z0,z1,y0)=>{ y0=y0||SILL; bx(g,guideMat,x0,x1,y0,TY0,z0,z1); Q.trilho+=TY0-y0; Q.guias=(Q.guias||0)+1; };
   // frente: a persiana corre a 3 cm da face externa (z = 1,12 m), no canal à frente do vidro
-  guide(XL+.04,XL+.07,ZF-.05,ZF-.01); guide(-.35,-.32,ZF-.05,ZF-.01); guide(-.28,-.25,ZF-.05,ZF-.01); guide(XR-.07,XR-.04,ZF-.05,ZF-.01);
+  guide(XL+.04,XL+.07,ZF-.05,ZF-.01); guide(XR-.07,XR-.04,ZF-.05,ZF-.01);
   // lateral da vitrine em L (x = 1,97 m)
   guide(XR-.045,XR-.015,ZF-.09,ZF-.06); guide(XR-.045,XR-.015,ZB+.04,ZB+.07);
   // lateral do relojoeiro (x = -1,97 m): poste intermediário em z = 0,55 m e quatro guias
@@ -482,7 +483,7 @@ const rollers=[]; // {mesh}
   // caixas de recolhimento dentro da testeira
   const rm=std(0x8a9096,.35,.8);
   const roll=(len,axis,x,y,z)=>{ const c=cyl(g,rm,.06,len,x,y,z,axis,16); rollers.push(c); Q.caixas++; };
-  roll(1.67,'x',-1.155,2.22,ZF-.06); roll(2.23,'x',.835,2.22,ZF-.06); roll(2.1,'z',XR-.06,2.22,-.05);
+  roll(3.96,'x',0,2.22,ZF-.06); roll(2.1,'z',XR-.06,2.22,-.05);
   roll(.54,'z',XL+.06,2.22,.83); roll(.98,'z',XL+.06,2.22,.05); // lateral do relojoeiro: um rolo sobre o canto da vitrine, outro sobre o mini painel
   // sanca indireta 3000K sob a testeira (face interna)
   const strip=(x0,x1,z0,z1)=>{bx(g,M.ledWarm,x0,x1,TY0-.012,TY0,z0,z1); Q.ledSanca+=Math.max(x1-x0,z1-z0);};
@@ -674,7 +675,7 @@ function texWood(){
     for(let i=0;i<n;i++){ const p=a0+off+i*P+P/2; if(skip&&p>skip[0]&&p<skip[1]) continue;
       list.push(axis==='x'?[p,(y0+y1)/2,c,W,y1-y0,D]:[c,(y0+y1)/2,p,D,y1-y0,W]); Q.ripaM+=y1-y0; Q.ripaA+=P*(y1-y0); }
   };
-  run('x',XL+.045,XR-.045,ZF-D/2,.04,.75,[-.34,-.26]);        // frente (clientes)
+  run('x',XL+.045,XR-.045,ZF-D/2,.04,.75);        // frente (clientes)
   run('z',ZB+.045,ZF-.045,XR-D/2,.04,.75);                    // lateral da vitrine em L
   run('z',-.43,.53,XL+D/2,.04,PAINEL_H-.04);                  // mini painel do posto de relógios
   run('z',.57,ZF-.045,XL+D/2,.04,.75);                        // lateral do módulo de canto (Relojoaria)
@@ -793,7 +794,7 @@ function buildTrays(){
   route(NEON.C1,[[-1.70,1.45,-1.12],[-1.70,1.27,-1.12],[-.40,1.27,-1.12]]);
   route(NEON.C2,[[-1.78,1.50,-1.12],[-1.94,1.50,-1.12],[-1.94,1.50,-.45],[-1.94,1.08,-.45],[-1.94,1.08,.45]]);
   route(NEON.C4,[[-1.66,1.78,-1.11],[-1.66,2.03,-1.11],[1.94,2.03,-1.11],[1.94,2.03,1.08],[-1.94,2.03,1.08],[-1.94,2.03,-1.0]]);
-  route(NEON.C4,[[-.30,2.03,1.08],[-.30,1.07,1.08]]); route(NEON.C4,[[1.94,2.03,1.08],[1.94,1.07,1.08]]);
+  route(NEON.C4,[[1.94,2.03,1.08],[1.94,1.07,1.08]]);
   route(NEON.C4,[[1.94,2.03,.4],[1.94,1.07,.4]]);
   route(NEON.AR,[[-1.62,1.42,-1.12],[-1.62,.40,-1.12],[1.30,.40,-1.12],[1.30,.28,-1.12],[1.30,.28,-.88]]);
   route(NEON.CFTV,[[-1.84,2.0,-1.03],[-1.84,2.01,-1.10],[-1.78,2.01,-1.10],[-1.78,1.80,-1.10]],.016);
@@ -836,7 +837,7 @@ const curtains=[]; let curtMats={};
   };
   // todas descem até o tampo da base de madeira (SILL), cobrindo o vidro e os produtos; sobre o mini painel descem até 1,30 m
   // as pontas se cruzam nos cantos (sem fresta): frente até x = ±1,99 m, laterais até z = 1,13 m
-  mk(1.67,DROP_V,-1.155,ZF-.03,0,'Cortina frente esquerda'); mk(2.27,DROP_V,.855,ZF-.03,0,'Cortina frente direita'); mk(2.25,DROP_V,XR-.03,.005,Math.PI/2,'Cortina lateral direita');
+  mk(3.98,DROP_V,0,ZF-.03,0,'Cortina frente (4,00 m, rolo único)'); mk(2.25,DROP_V,XR-.03,.005,Math.PI/2,'Cortina lateral direita');
   mk(.58,DROP_V,XL+.03,.845,Math.PI/2,'Cortina lateral relojoeiro (canto)'); mk(.98,TY0-PAINEL_H,XL+.03,.05,Math.PI/2,'Cortina lateral relojoeiro (painel)');
 })();
 let closeP=0;
@@ -1002,7 +1003,7 @@ function renderBOM(){
   const rows=[
     ['Segurança e fechamento noturno'],
     ['cort',`Cortina ${cKind}`,`${fmt(curtArea)} m²`,`frente 4,00 m + lateral da vitrine 2,30 m + canto do relojoeiro 0,56 m, com queda de ${fmt(DROP_V)} m até o tampo de madeira, mais 1,00 m sobre o mini painel (queda de ${fmt(TY0-PAINEL_H)} m) · compra com 8 % de sobra: ${fmt(curtArea*1.08)} m²`],
-    ['cx','Caixas de recolhimento na testeira',`${Q.caixas} un`,'1,70 m + 2,30 m (frente), 2,30 m (lateral da vitrine) e 0,56 m + 1,00 m (lateral do relojoeiro)'],
+    ['cx','Caixas de recolhimento na testeira',`${Q.caixas} un`,'4,00 m (frente, rolo único), 2,30 m (lateral da vitrine) e 0,56 m + 1,00 m (lateral do relojoeiro)'],
     ['tr','Trilhos-guia nos pilares',`${fmt(Q.trilho)} m`,`${Q.guias} guias, com queda de ${fmt(TY0-PAINEL_H)} a ${fmt(DROP_V)} m`],
     ['cf','Câmeras dome + sensor IR',`${Q.cftv} + ${Q.ir} un`,'balcão e bancada de máquinas; sensor de presença no fundo'],
     ['Pontos elétricos'],
