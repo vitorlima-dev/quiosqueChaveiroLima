@@ -73,6 +73,7 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .tools .btn{box-shadow:none;background:var(--panel2);justify-content:center;padding:0 8px;-webkit-backdrop-filter:none;backdrop-filter:none}
 .tools .btn[aria-pressed="true"]{background:var(--mostarda)}
 .tools .btn:disabled{opacity:.55}
+.tools #btnMob{grid-column:1/-1}
 .cfg{display:grid;gap:10px}
 .warn{margin:6px 0 0;padding:8px 10px;border-left:4px solid var(--mostarda);background:var(--panel2);font-size:12px;color:var(--muted);border-radius:0 8px 8px 0}
 .cfg label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
@@ -155,6 +156,7 @@ details li b{color:var(--ink);font-weight:600}
 
     <div class="tools">
       <button class="btn" type="button" id="btnDims" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 17 17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2"/></svg>Cotas e rótulos</button>
+      <button class="btn" type="button" id="btnMob" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M8 3v8h8V3M6 11h12M12 11v7M7 21l5-3 5 3"/></svg>Mobiliário ilustrativo</button>
       <button class="btn" type="button" id="btnExport"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Exportar GLTF</button>
     </div>
     <h2>Configuração</h2>
@@ -199,6 +201,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine e 1,00 m sobre o mini painel. Um poste de metalon em z = 0,55 m divide os dois.</li>
         <li><b>Loja fechada:</b> o vidro da vitrine recuou 6 cm da face externa, e as persianas descem nesse canal até o tampo da base de madeira (0,76 m), cobrindo o vidro e os produtos. Nos cantos as persianas se cruzam e a porta sobe até a travessa de topo, sem fresta. Conferi por traçado de raios, de 3,2 e 5 m de distância e de 0,7 a 2,0 m de altura, a cada 6°: nenhum dos 632 pontos de produto testados aparece. A cobertura do quiosque não está modelada, então a verificação vale para quem olha de fora na altura da rua.</li>
         <li><b>Madeira ripada</b> reveste a base da vitrine em L, o módulo de canto e o mini painel do relojoeiro. O fundo, onde ficam as chaves, é uma parede lisa e fosca em cinza chumbo, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
+        <li><b>Mobiliário ilustrativo:</b> a cadeira de escritório (relojoeiro) e a banqueta (segundo funcionário, de frente para o balcão do chaveiro) servem só para ver a escala humana. Ficam fora da lista de materiais e dá para ocultá-las no botão do painel. A cadeira encosta na bancada com o assento a 0,56 m, e o tampo da bancada está a 0,95 m, então ela precisa ficar na altura máxima.</li>
         <li><b>Piso:</b> o modelo não tem placa de piso própria. O padrão é o piso existente do local, e o piso vinílico é opcional, aplicado na área de circulação. Os eletrodutos rasteiros das rotas de energia correm no vão de 10 cm abaixo das bases, então precisam de eletroduto fixo no piso existente ou de rodapé técnico.</li>
         <li><b>Bancada do relojoeiro aberta:</b> sem vidro nem anteparo ao redor, só o mini painel de 1,30 m atrás. Sem o anteparo, a limalha da bancada de máquinas pode alcançar o posto. O micro-exaustor reduz isso, e vale testar na prática.</li>
         <li><b>Bancada de máquinas</b> encurtada de 2,30 para 1,45 m, começando em x = -0,50 m. A passagem entre ela e a bancada do relojoeiro passou de cerca de 0,20 m para 0,86 m. As duas Yale e a pantográfica foram reacomodadas, com a pantográfica em escala 90 %.</li>
@@ -302,7 +305,7 @@ const letreiroMats=[], glowMats=[], ledMats=[M.ledCool,M.ledWarm,M.ledWhite];
 
 /* ---------- grupos ---------- */
 const root=new T.Group(); root.name='Quiosque Chaveiro Lima'; root.scale.x=-1; scene.add(root); // espelhado em X: bancada do relojoeiro à direita de quem olha a fachada
-const G={}; ['struct','test','back','mach','nicho','left','vit','trays','wood','floor','elec','cftv','curt','glow','neon','dims'].forEach(n=>G[n]=grp(n));
+const G={}; ['struct','test','back','mach','nicho','left','vit','trays','wood','floor','mob','elec','cftv','curt','glow','neon','dims'].forEach(n=>G[n]=grp(n));
 G.neon.userData.keep=true; G.dims.userData.keep=true; G.glow.userData.keep=true; G.neon.visible=false; G.dims.visible=false;
 G.trays.userData.noExport=false;
 
@@ -734,6 +737,25 @@ function buildTrays(){
   collectGhost();
 }
 
+/* ================= MOBILIÁRIO ILUSTRATIVO (escala humana) ================= */
+(function buildMob(){
+  const g=G.mob, sg=std(0x40454a,.85,0), blk=std(0x111213,.5,.4), ms=std(COL.mostarda,.6,.1), st=std(0x9aa1a8,.35,.8);
+  // cadeira de escritório, de frente para a bancada do relojoeiro
+  const ch=grp('Cadeira de escritório (ilustrativa)',g); ch.position.set(-1.12,0,-.12); ch.rotation.y=-Math.PI/2;
+  for(let i=0;i<5;i++){ const a=i*Math.PI*2/5, arm=new T.Group(); arm.rotation.y=a; arm.add(bx(arm,blk,.0,.27,.055,.085,-.02,.02)); ch.add(arm);
+    const c=new T.Mesh(new T.SphereGeometry(.026,10,8),blk); c.position.set(Math.sin(a+Math.PI/2)*.27,.026,Math.cos(a+Math.PI/2)*.27); ch.add(c); }
+  cyl(ch,st,.03,.43,0,.305,0,'y',12);
+  bx(ch,sg,-.24,.24,.52,.595,-.23,.23);
+  const back=bx(ch,sg,-.22,.22,.66,1.12,-.04,.02); back.position.z-=.2; back.rotation.x=-.12; back.position.y+=.0;
+  bx(ch,blk,-.03,.03,.595,.7,-.22,-.19);
+  [-1,1].forEach(k=>{ bx(ch,blk,k*.25-.012,k*.25+.012,.595,.74,-.02,.02); bx(ch,blk,k*.25-.025,k*.25+.025,.74,.765,-.12,.14); });
+  // banqueta, de frente para o balcão do chaveiro (segundo funcionário)
+  const bq=grp('Banqueta (ilustrativa)',g); bq.position.set(.35,0,.20);
+  cyl(bq,ms,.18,.05,0,.68,0,'y',28); cyl(bq,blk,.17,.02,0,.65,0,'y',28);
+  [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([a,b])=>{ const l=cyl(bq,st,.014,.66,a*.115,.32,b*.115,'y',8); l.rotation.z=-a*.05; l.rotation.x=b*.05; });
+  const ring=new T.Mesh(new T.TorusGeometry(.135,.01,8,28),st); ring.rotation.x=Math.PI/2; ring.position.y=.27; bq.add(ring);
+})();
+
 /* ================= QGBT E CFTV ================= */
 (function buildElec(){
   const g=G.elec;
@@ -923,6 +945,7 @@ document.querySelectorAll('#segDay button').forEach(b=>b.addEventListener('click
 $('#btnClose').addEventListener('click',()=>setClosed(!S.closed));
 $('#btnInfra').addEventListener('click',()=>setInfra(!S.infra));
 $('#btnDims').addEventListener('click',()=>setDims(!S.dims));
+$('#btnMob').addEventListener('click',()=>{ const on=!G.mob.visible; G.mob.visible=on; $('#btnMob').setAttribute('aria-pressed',String(on)); dirty=true; });
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>goPreset(c.dataset.p)));
 document.querySelectorAll('[data-cfg]').forEach(sg=>sg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
   sg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',String(x===b)));
