@@ -191,6 +191,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar. A cortina noturna cobre só a frente e a lateral da vitrine em L, então esse vão fica sem fechamento à noite.</li>
         <li><b>Madeira ripada</b> reveste a base da vitrine em L, o módulo de canto e o mini painel do relojoeiro. O fundo, onde ficam as chaves, é uma parede lisa e fosca em cinza chumbo, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
+        <li><b>Bancada de máquinas</b> encurtada de 2,30 para 1,45 m, começando em x = -0,50 m. A passagem entre ela e a bancada do relojoeiro passou de cerca de 0,20 m para 0,86 m. As duas Yale e a pantográfica foram reacomodadas, com a pantográfica em escala 90 %.</li>
         <li><b>PDV removido</b> junto com as 4 tomadas 10A e o circuito 3. O circuito 4 manteve o número.</li>
         <li><b>Áreas</b> são líquidas, sem perda de corte. A cortina mostra também a compra com 8 % de sobra para dobra e sobreposição.</li>
         <li><b>Exportar GLTF</b> salva o estado atual da cena em JSON, já com o espelhamento aplicado. Renomeie o arquivo de <code>.gltf.json</code> para <code>.gltf</code>.</li>
@@ -210,6 +211,7 @@ const $ = s => document.querySelector(s);
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- dimensões (metros). X: esquerda(-) a direita(+) vista da rua. Z: fundo(-) a frente(+). ---------- */
+const BANCADA_X0=-.50; // início da bancada de máquinas: 0,86 m de passagem até a bancada do relojoeiro (que termina em x = -1,36)
 const XL=-2, XR=2, ZF=1.15, ZB=-1.15, H=2.4, TY0=2.05, CTR=1.10, VD=0.60, PAINEL_H=1.30; // PAINEL_H: altura do mini painel do posto de relógios
 const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 
@@ -494,35 +496,36 @@ let logoMat, haloMat;
 /* ================= BANCADA DE MÁQUINAS, EXAUSTOR, COFRE ================= */
 const air=[]; // setas de fluxo
 (function buildMachines(){
-  const g=G.mach, zb=-1.10, zf=-.65;
-  mdf(g,'c',-1.35,.95,.10,.90,zb,zf);
-  bx(g,M.metal,-1.37,.97,.90,.93,zb,zf+.02);
+  const g=G.mach, zb=-1.10, zf=-.65, X0=BANCADA_X0; // bancada encurtada: começa em X0, liberando a passagem de entrada
+  mdf(g,'c',X0,.95,.10,.90,zb,zf);
+  bx(g,M.metal,X0-.02,.97,.90,.93,zb,zf+.02);
   // portas do gabinete
-  for(let x=-1.30;x<.9;x+=.55) bx(g,std(0x42464a,.7,.1),x,x+.5,.2,.85,zf,zf+.004);
+  const nP=3, wP=(.95-X0)/nP;
+  for(let i=0;i<nP;i++) bx(g,std(0x42464a,.7,.1),X0+i*wP+.02,X0+(i+1)*wP-.02,.2,.85,zf,zf+.004);
   // Yale (x2)
   const yale=(x)=>{ const y=grp('Duplicadora Yale',g); y.position.set(x,.93,-.88);
     bx(y,M.machA,-.13,.13,0,.035,-.14,.14); bx(y,M.machA,-.04,.04,.035,.24,-.14,-.07);
     bx(y,M.machA,-.12,.0,.07,.11,-.08,.1); bx(y,M.steel,.02,.12,.06,.1,-.05,.08);
     cyl(y,M.alu,.045,.02,-.07,.16,.04,'x',24); cyl(y,M.machB,.012,.09,.14,.09,.05,'x',10); cyl(y,M.machB,.022,.03,.19,.09,.05,'x',12);
     cyl(y,M.dark,.02,.05,0,.13,-.02,'y',12); };
-  yale(-1.0); yale(-.62);
+  yale(-.35); yale(-.07);
   // pantográfica
-  const p=grp('Pantográfica',g); p.position.set(.58,.93,-.9);
+  const p=grp('Pantográfica',g); p.position.set(.68,.93,-.9); p.scale.setScalar(.9);
   bx(p,M.machA,-.27,.27,0,.04,-.16,.16); bx(p,M.machA,-.04,.04,.04,.36,-.14,-.08);
   bx(p,M.machA,-.24,.12,.30,.33,-.13,-.09); bx(p,M.machA,-.22,.14,.2,.23,-.07,-.03);
   bx(p,M.steel,-.24,.24,.06,.09,-.02,.12); cyl(p,M.alu,.012,.14,-.2,.15,.02,'y',10); cyl(p,M.machB,.03,.02,.1,.2,.0,'y',12);
   cyl(p,M.dark,.01,.1,.14,.2,.04,'y',8);
   // micro-exaustor de limalha embutido no tampo
-  const ex=bx(g,M.graphite,-.40,-.16,.90,.99,-1.08,-.94); Q.exaustor++;
-  for(let i=0;i<5;i++) bx(g,M.steel,-.385+i*.045,-.372+i*.045,.99,.996,-1.07,-.95);
+  const ex=bx(g,M.graphite,.10,.28,.90,.99,-1.08,-.94); Q.exaustor++;
+  for(let i=0;i<4;i++) bx(g,M.steel,.115+i*.04,.128+i*.04,.99,.996,-1.07,-.95);
   // cofre blindado chumbado, porta aparente na frente do gabinete
   const cf=grp('Cofre',g);
-  bx(cf,M.graphite,.28,.72,.18,.62,zf,zf+.02); cyl(cf,M.steel,.055,.025,.42,.40,zf+.03,'z',24); cyl(cf,M.dark,.015,.04,.42,.40,zf+.045,'z',10);
-  bx(cf,M.dark,.58,.68,.46,.56,zf+.02,zf+.026); bx(cf,M.green,.605,.655,.51,.535,zf+.026,zf+.03);
-  [[.31,.21],[.69,.21],[.31,.59],[.69,.59]].forEach(([x,y])=>cyl(cf,M.steel,.01,.01,x,y,zf+.025,'z',8)); Q.cofre++;
+  bx(cf,M.graphite,-.22,.22,.18,.62,zf,zf+.02); cyl(cf,M.steel,.055,.025,-.08,.40,zf+.03,'z',24); cyl(cf,M.dark,.015,.04,-.08,.40,zf+.045,'z',10);
+  bx(cf,M.dark,.08,.18,.46,.56,zf+.02,zf+.026); bx(cf,M.green,.105,.155,.51,.535,zf+.026,zf+.03);
+  [[-.19,.21],[.19,.21],[-.19,.59],[.19,.59]].forEach(([x,y])=>cyl(cf,M.steel,.01,.01,x,y,zf+.025,'z',8)); Q.cofre++;
   // régua 6x 20A na parede, acima das máquinas
-  bx(g,M.alu,-.70,-.10,1.235,1.305,-1.10,-1.07);
-  for(let i=0;i<6;i++) socket(g,20,-.655+i*.1,1.27,-1.068,'z+','C1');
+  bx(g,M.alu,-.40,.20,1.235,1.305,-1.10,-1.07);
+  for(let i=0;i<6;i++) socket(g,20,-.355+i*.1,1.27,-1.068,'z+','C1');
 })();
 
 /* ================= NICHO TÉCNICO (OPÇÃO A) ================= */
@@ -727,7 +730,7 @@ function buildTrays(){
     const cone=new T.Mesh(new T.ConeGeometry(.42,len,24,1,true).translate(0,-len/2,0),nm(NEON.CFTV,.1)); cone.position.set(x,TY0-.06,z);
     cone.quaternion.setFromUnitVectors(new T.Vector3(0,-1,0),dir.normalize()); cone.renderOrder=11; G.neon.add(cone);
   };
-  cam(-1.84,-1.03,[.7,.95,.75],'Câmera dome balcão'); cam(1.84,1.0,[.5,.4,-.65],'Câmera dome cofre');
+  cam(-1.84,-1.03,[.7,.95,.75],'Câmera dome balcão'); cam(1.84,1.0,[0,.4,-.65],'Câmera dome cofre');
   // sensor de presença infravermelho
   const ir=grp('Sensor IR',G.cftv); ir.position.set(1.30,TY0-.07,-1.07);
   bx(ir,std(0xf1f2f4,.5,.1),-.04,.04,-.03,.03,-.02,.02); const lens=new T.Mesh(new T.SphereGeometry(.026,14,10),std(0xe9d2d2,.2,.1,{transparent:true,opacity:.9})); lens.position.set(0,-.005,.03); ir.add(lens); Q.ir++;
@@ -739,7 +742,7 @@ function buildTrays(){
 /* ================= ROTAS ELÉTRICAS (infraestrutura) ================= */
 (function buildRoutes(){
   const q=[-1.70,1.55,-1.08]; // QGBT
-  route(NEON.C1,[[-1.70,1.45,-1.12],[-1.70,1.27,-1.12],[-.66,1.27,-1.12]]);
+  route(NEON.C1,[[-1.70,1.45,-1.12],[-1.70,1.27,-1.12],[-.40,1.27,-1.12]]);
   route(NEON.C2,[[-1.78,1.50,-1.12],[-1.94,1.50,-1.12],[-1.94,1.50,-.45],[-1.94,1.08,-.45],[-1.94,1.08,.45]]);
   route(NEON.C4,[[-1.66,1.78,-1.11],[-1.66,2.03,-1.11],[1.94,2.03,-1.11],[1.94,2.03,1.08],[-1.94,2.03,1.08],[-1.94,2.03,-1.0]]);
   route(NEON.C4,[[-.30,2.03,1.08],[-.30,1.07,1.08]]); route(NEON.C4,[[1.94,2.03,1.08],[1.94,1.07,1.08]]);
@@ -749,15 +752,15 @@ function buildTrays(){
   route(NEON.CFTV,[[1.84,2.0,1.0],[1.84,2.0,-1.07],[-1.78,2.0,-1.07]],.016);
   route(NEON.IR,[[1.30,1.98,-1.07],[1.30,1.98,-1.09],[-1.74,1.98,-1.09],[-1.74,1.80,-1.09]],.014);
   // cofre e exaustor
-  neon(NEON.COFRE,.26,.74,.16,.64,-.66,-.60,.55); neon(NEON.C1,-.42,-.14,.88,1.02,-1.10,-.92,.6);
+  neon(NEON.COFRE,-.24,.24,.16,.64,-.66,-.60,.55); neon(NEON.C1,.08,.30,.88,1.02,-1.10,-.92,.6);
   // etiquetas
-  tag('C1 · 6× 20A · motores + micro-exaustor',-.5,1.72,-1.0,NEON.C1);
+  tag('C1 · 6× 20A · motores + micro-exaustor',-.1,1.72,-1.0,NEON.C1);
   tag('C2 · 4× 10A · relojoeiro',-1.9,1.38,.1,NEON.C2);
   tag('C4 · QGBT · DR 30 mA + DPS',-1.7,1.9,-1.0,NEON.C4);
   tag('Opção A · 20A dedicada',1.18,1.0,-.7,NEON.AR);
   tag('CFTV dome ×2',-1.4,2.15,-.9,NEON.CFTV);
   tag('Sensor IR',1.3,2.18,-.95,NEON.IR);
-  tag('Cofre chumbado',.5,.14,-.45,NEON.COFRE);
+  tag('Cofre chumbado',0,.14,-.45,NEON.COFRE);
 })();
 function label(text,o){
   o=o||{}; const fs=o.fs||40, cv=document.createElement('canvas'), cx=cv.getContext('2d');
@@ -811,12 +814,14 @@ function setClosure(kind){ curtains.forEach(c=>{ c.cloth.material=curtMats[kind]
   lineZ(ZB,ZF-VD,XR+.5); put('1,70 m',XR+.5,.2,-.3);
   // altura
   const hm=bx(g,lm,XR+.55-th/2,XR+.55+th/2,0,H,ZF+.35-th/2,ZF+.35+th/2); hm.renderOrder=14; put('2,40 m',XR+.55,H+.12,ZF+.35);
+  // passagem de entrada entre a bancada do relojoeiro e a bancada de máquinas
+  lineX(-1.36,BANCADA_X0,-.3); tickX(-1.36,-.3); tickX(BANCADA_X0,-.3); put('passagem 0,86 m',(-1.36+BANCADA_X0)/2,.2,-.3,{size:.1});
   // corredor
   lineZ(-.65,.55,-.7); put('corredor ≈ 1,20 m',-.7,.2,-.05,{size:.1});
   // rótulos de seção
   const sl=(t,x,z,o)=>{const s=label(t,Object.assign({size:.12,bg:'rgba(18,20,22,.9)',fs:40},o||{})); s.position.set(x,1.25,z); g.add(s);};
   sl('RELOJOARIA · 30 %',-1.15,.9); sl('CHAVEIRO PRINCIPAL · 50 %',.85,.9); sl('OUTROS · 20 %',1.7,-.3);
-  sl('BANCADA RELOJOEIRO',-1.65,.05,{size:.1}); sl('PORTA 0,70 m',-1.62,-.8,{size:.1}); sl('BANCADA DE MÁQUINAS',-.2,-.85,{size:.1}); sl('NICHO A',1.18,-.88,{size:.1});
+  sl('BANCADA RELOJOEIRO',-1.65,.05,{size:.1}); sl('PORTA 0,70 m',-1.62,-.8,{size:.1}); sl('BANCADA DE MÁQUINAS',.22,-.85,{size:.1}); sl('NICHO A',1.18,-.88,{size:.1});
 })();
 
 /* ================= GHOST (modo infraestrutura) ================= */
