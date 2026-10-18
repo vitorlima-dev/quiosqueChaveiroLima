@@ -200,6 +200,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Loja fechada:</b> o vidro da vitrine recuou 6 cm da face externa, e as persianas descem nesse canal até o tampo da base de madeira (0,76 m), cobrindo o vidro e os produtos. Nos cantos as persianas se cruzam e a porta sobe até a travessa de topo, sem fresta. Conferi por traçado de raios, de 3,2 e 5 m de distância e de 0,7 a 2,0 m de altura, a cada 6°: nenhum dos 632 pontos de produto testados aparece. A cobertura do quiosque não está modelada, então a verificação vale para quem olha de fora na altura da rua.</li>
         <li><b>Madeira ripada</b> reveste a base da vitrine em L, o módulo de canto e o mini painel do relojoeiro. O fundo, onde ficam as chaves, é uma parede lisa e fosca em cinza chumbo, em ripas verticais de 35 × 20 mm. A base recuou 2 cm para a ripa ficar alinhada ao vidro, e as medidas externas continuam 4,00 × 2,30 m.</li>
         <li><b>Piso:</b> o modelo não tem placa de piso própria. O padrão é o piso existente do local, e o piso vinílico é opcional, aplicado na área de circulação. Os eletrodutos rasteiros das rotas de energia correm no vão de 10 cm abaixo das bases, então precisam de eletroduto fixo no piso existente ou de rodapé técnico.</li>
+        <li><b>Bancada do relojoeiro aberta:</b> sem vidro nem anteparo ao redor, só o mini painel de 1,30 m atrás. Sem o anteparo, a limalha da bancada de máquinas pode alcançar o posto. O micro-exaustor reduz isso, e vale testar na prática.</li>
         <li><b>Bancada de máquinas</b> encurtada de 2,30 para 1,45 m, começando em x = -0,50 m. A passagem entre ela e a bancada do relojoeiro passou de cerca de 0,20 m para 0,86 m. As duas Yale e a pantográfica foram reacomodadas, com a pantográfica em escala 90 %.</li>
         <li><b>PDV removido</b> junto com as 4 tomadas 10A e o circuito 3. O circuito 4 manteve o número.</li>
         <li><b>Áreas</b> são líquidas, sem perda de corte. A cortina mostra também a compra com 8 % de sobra para dobra e sobreposição.</li>
@@ -598,9 +599,7 @@ let coolerPortatil, coolerClimat;
   bx(b,M.metal,-1.96,-1.36,.91,.95,zs,ze);  // tampo chumbo
   sheet(b,'b',-1.93,-1.40,.95,.952,-.40,.50);
   bx(b,M.mat,-1.88,-1.55,.952,.956,-.30,.05);  // manta de bancada
-  // anteparo de vidro 25 cm anti-limalha: lado das máquinas e lado do corredor (L de 1,60 m)
-  pane(b,-1.96,-1.36,.95,1.20,-.45,-.442); pane(b,-1.372,-1.364,.95,1.20,-.45,.55);
-  mt(b,-1.96,-1.36,.945,.95,-.45,-.442); mt(b,-1.372,-1.364,.945,.95,-.45,.55);
+  // bancada aberta: sem vidro nem anteparo ao redor, para ventilar
   // relógio sendo montado + lupa
   cyl(b,M.alu,.025,.008,-1.62,.96,-.1,'y',18); cyl(b,std(0x111,.4,.2),.02,.004,-1.62,.966,-.1,'y',18);
   cyl(b,M.dark,.028,.03,-1.70,.968,.18,'y',16);
@@ -611,7 +610,7 @@ let coolerPortatil, coolerClimat;
   const hd=new T.Mesh(new T.ConeGeometry(.07,.09,20,1,true),std(0x222426,.5,.5,{side:T.DoubleSide})); hd.position.set(-1.52,1.40,.30); hd.rotation.z=.2; l.add(hd);
   const disc=new T.Mesh(new T.CircleGeometry(.055,20),M.lampHead); disc.rotation.x=Math.PI/2; disc.position.set(-1.525,1.36,.30); l.add(disc);
   glow(0xffffff,.6,-1.525,1.34,.30,.8);
-  // 4 tomadas 10A na parede, com anteparo
+  // 4 tomadas 10A na parede, numa régua de alumínio
   [-.2,0,.2,.4].forEach(z=>socket(g,10,XL+.037,1.08,z,'x+','C2'));
   bx(g,M.alu,XL+.036,XL+.05,1.045,1.115,-.26,.46);
 })();
@@ -1000,7 +999,7 @@ function renderBOM(){
     ['led3','Halo LED branco do logo',`${fmt(Q.ledHalo)} m`,'contorno do disco preto'],
     ['rp','Madeira ripada (ripas 35 × 20 mm)',`${fmt(Q.ripaA)} m²`,`${Q.ripas} ripas verticais · ${fmt(Q.ripaM)} m lineares, vão de 15 mm sobre o chumbo · compra com 10 % de perda: ${fmt(Q.ripaA*1.1)} m²`],
     ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC+Q.mdfB)} m²`,`${fmt(Q.mdfC)} m² de bases, bancadas, nicho e porta + ${fmt(Q.mdfB)} m² de painel de fundo liso, forros e mini painel do relojoeiro`],
-    ['vd','Vidro temperado',`${fmt(Q.vidro)} m²`,'caixa 0,75 a 1,10 m e anteparo anti-limalha de 25 cm']
+    ['vd','Vidro temperado',`${fmt(Q.vidro)} m²`,'somente a caixa das vitrines, de 0,75 a 1,10 m']
   ];
   let html='', first=true;
   rows.forEach(r=>{
