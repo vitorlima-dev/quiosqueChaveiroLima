@@ -165,7 +165,9 @@ details li b{color:var(--ink);font-weight:600}
 
     <div class="tools">
       <button class="btn" type="button" id="btnDims" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 17 17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2"/></svg>Cotas e rótulos</button>
+      <button class="btn" type="button" id="btnReal" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="3.5"/></svg>Modo realista</button>
       <button class="btn" type="button" id="btnMob" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M8 3v8h8V3M6 11h12M12 11v7M7 21l5-3 5 3"/></svg>Mobiliário ilustrativo</button>
+      <button class="btn" type="button" id="btnShot"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg>Salvar imagem</button>
       <button class="btn" type="button" id="btnExport"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Exportar GLTF</button>
     </div>
     <h2>Configuração</h2>
@@ -215,6 +217,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine e 1,00 m sobre o mini painel. Um poste de metalon em z = 0,55 m divide os dois.</li>
         <li><b>Placa da loja:</b> fundo preto e "CHAVEIRO LIMA" em branco, grande, centrado e com as letras espaçadas, sem filetes nem símbolos. O telefone de contato (fictício, (11) 91234-5678) fica sem moldura, no canto direito da frente, e dá para trocá-lo no campo do painel.</li>
+        <li><b>Modo realista:</b> liga reflexos de ambiente em vidro, metal e madeira e uma sombra de sol mais nítida. Não é um render por traçado de raios, é uma aproximação em tempo real. “Salvar imagem” grava um PNG da vista atual em resolução maior.</li>
         <li><b>Letreiro e logo:</b> o letreiro tem fita LED de retroiluminação dentro da testeira, na frente e nas duas laterais, ligada por 3 subidas curtas do tronco de 24 V. O halo do logo se liga ao mesmo tronco, por uma derivação atrás do disco. As duas cargas entram na fonte única do QGBT.</li>
         <li><b>LED das vitrines:</b> o cabo de 24 V desce pelo pilar do canto frontal direito, entra numa caixa de passagem sob o vidro e sai em 4 rabichos pretos até as pontas dos 4 perfis (2 na frente, 2 na lateral). No modo infraestrutura o caminho aparece em amarelo.</li>
         <li><b>Fiação simplificada:</b> 4 circuitos, cada um com função clara: C1 máquinas, C2 relojoeiro, nicho do ar e C4 (LED, roteador e câmera). Saíram 2 tomadas industriais e 1 tomada do relojoeiro. As rotas passam por dentro do metalon e não cruzam mais a folha da porta. A fonte LED é uma só, no QGBT, e a fita da sanca se alimenta pelas pontas.</li>
@@ -957,7 +960,7 @@ function setGhost(t){ ghostT=t; ghostMats.forEach(m=>applyGhostTo(m,t)); }
 let nightT=0;
 function applyNight(t){
   nightT=t; scene.background.lerpColors(SKY_DAY,SKY_NIGHT,t); scene.fog.color.copy(scene.background).convertSRGBToLinear();
-  hemi.intensity=lerp(.95,.34,t); hemi.color.lerpColors(new T.Color(0xffffff),new T.Color(0x5c78b8),t); hemi.groundColor.lerpColors(new T.Color(0x8a8d90),new T.Color(0x0b0c10),t);
+  hemi.intensity=lerp(.95,.34,t)*(hemi.userData.k||1); hemi.color.lerpColors(new T.Color(0xffffff),new T.Color(0x5c78b8),t); hemi.groundColor.lerpColors(new T.Color(0x8a8d90),new T.Color(0x0b0c10),t);
   sun.intensity=lerp(1.15,0,t); moon.intensity=lerp(0,.3,t);
   const k=lerp(.18,1,t);
   PL.warmF.intensity=2.0*k; PL.warmB.intensity=1.6*k; PL.vitF.intensity=1.5*k; PL.vitL.intensity=1.2*k; PL.logo.intensity=1.3*k; PL.lamp.intensity=1.0*k;
@@ -967,6 +970,7 @@ function applyNight(t){
   glowMats.forEach(m=>m.opacity=m.userData.base*lerp(.12,1,t)*(S.closed?1:1));
   M.ground.color.setScalar(lerp(1,.38,t));
   renderer.toneMappingExposure=lerp(1,1.12,t);
+  if(realism&&envDay&&(t>.5)!==(scene.environment===envNight)) scene.environment=envFor(t);
 }
 
 /* ================= TWEENS ================= */
@@ -1215,6 +1219,45 @@ async function exportGLTF(){
 }
 $('#btnExport').addEventListener('click',exportGLTF);
 
+
+/* ================= REALISMO: reflexos de ambiente, sombra de alta resolução e imagem em PNG ================= */
+let realism=true, envDay=null, envNight=null;
+function makeEnv(night){
+  const sc=new T.Scene(), g=new T.SphereGeometry(60,48,24), p=g.attributes.position, col=new Float32Array(p.count*3), c=new T.Color();
+  const top=night?new T.Color(.018,.028,.07):new T.Color(.42,.58,.9), hor=night?new T.Color(.05,.06,.1):new T.Color(1.0,.97,.9), gnd=night?new T.Color(.015,.015,.02):new T.Color(.36,.34,.31);
+  for(let i=0;i<p.count;i++){ const y=p.getY(i)/60; if(y>=0) c.copy(hor).lerp(top,Math.pow(y,.55)); else c.copy(hor).lerp(gnd,Math.min(1,-y*3)); col.set([c.r,c.g,c.b],i*3); }
+  g.setAttribute('color',new T.BufferAttribute(col,3)); sc.add(new T.Mesh(g,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide})));
+  const box=(w,h,pos,intensity,color)=>{ const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:new T.Color(color).multiplyScalar(intensity),side:T.DoubleSide})); m.position.set(...pos); m.lookAt(0,0,0); sc.add(m); };
+  if(!night){ box(26,16,[30,38,34],14,0xfff1dc); box(40,6,[-40,14,10],2.2,0xdfe9ff); box(30,6,[0,10,-48],2.0,0xffffff); }
+  else { box(8,3,[26,12,30],5,0xffc27a); box(8,3,[-30,10,-20],3,0x9bb6ff); box(14,2,[0,8,45],2,0xfff0d8); }
+  const pm=new T.PMREMGenerator(renderer); const rt=pm.fromScene(sc,.02); pm.dispose(); g.dispose(); return rt.texture;
+}
+function envFor(t){ if(!envDay) envDay=makeEnv(false); if(!envNight) envNight=makeEnv(true); return t>.5?envNight:envDay; }
+function applyRealism(){
+  scene.environment=realism?envFor(nightT):null;
+  root.traverse(o=>{ if(o.isMesh){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m&&m.isMeshStandardMaterial){ m.envMapIntensity=realism?Math.max(.12,1.15-m.roughness*1.05):1; } }); } });
+  if(M.ground) M.ground.envMapIntensity=realism?.18:1;
+  const ms=realism?4096:2048; if(sun.shadow.mapSize.x!==ms){ if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; } sun.shadow.mapSize.set(ms,ms); }
+  hemi.userData.k=realism?.45:1; applyNight(nightT); dirty=true;
+}
+function setRealism(on){ realism=on; $('#btnReal').setAttribute('aria-pressed',String(on)); applyRealism(); }
+$('#btnReal').addEventListener('click',()=>setRealism(!realism));
+async function saveImage(){
+  const btn=$('#btnShot'); btn.disabled=true;
+  try{
+    const dl=await (window.claude&&claude.use?claude.use('downloads'):null);
+    if(!dl){ toast('O download não está disponível neste visualizador.'); return; }
+    const pr=renderer.getPixelRatio(), w=stage.clientWidth, h=stage.clientHeight;
+    renderer.setPixelRatio(Math.min(3,Math.max(2,pr*1.5))); renderer.setSize(w,h,false); controls.update(); renderer.render(scene,camera);
+    const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
+    renderer.setPixelRatio(pr); renderer.setSize(w,h,false); dirty=true;
+    if(!blob) throw new Error('sem imagem');
+    await dl.save({filename:'quiosque-chaveiro-lima.png',data:blob}); toast('Imagem salva na vista atual.');
+  }catch(e){ if(e&&e.code==='declined') toast('Salvamento cancelado.'); else if(e&&e.code) toast('Não foi possível salvar a imagem ('+e.code+').'); else { console.error(e); toast('Falha ao gerar a imagem.'); } }
+  finally{ btn.disabled=false; }
+}
+$('#btnShot').addEventListener('click',saveImage);
+
 /* ================= LOOP ================= */
 function resize(){
   const w=stage.clientWidth, h=stage.clientHeight; if(!w||!h) return;
@@ -1239,9 +1282,9 @@ function frame(now){
 root.traverse(o=>{ if(o.isMesh){ o.castShadow=!o.material.transparent&&!o.isInstancedMesh; o.receiveShadow=true; } });
 curtains.forEach(c=>c.cloth.castShadow=false);
 buildTrays();
-setClosure('lona'); setCurtain(0); applyNight(0); renderBOM(); renderAudit(); collectGhost();
+setClosure('lona'); setCurtain(0); applyNight(0); applyRealism(); renderBOM(); renderAudit(); collectGhost();
 document.querySelectorAll('.chip')[0].setAttribute('aria-pressed','true');
 resize(); requestAnimationFrame(frame);
-window.__kiosk={S,Q,G,scene,camera,controls,setNight,setClosed,setInfra,setDims,goPreset,renderer,applyNight,setCurtain,setGhost,setCooler,markDirty:()=>{dirty=true;},buildGLTF};
+window.__kiosk={setRealism,S,Q,G,scene,camera,controls,setNight,setClosed,setInfra,setDims,goPreset,renderer,applyNight,setCurtain,setGhost,setCooler,markDirty:()=>{dirty=true;},buildGLTF};
 })();
 </script>
