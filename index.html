@@ -215,6 +215,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine e 1,00 m sobre o mini painel. Um poste de metalon em z = 0,55 m divide os dois.</li>
         <li><b>Placa da loja:</b> fundo preto e "CHAVEIRO LIMA" em branco, grande, centrado e com as letras espaçadas, sem filetes nem símbolos. O telefone de contato (fictício, (11) 91234-5678) fica sem moldura, no canto direito da frente, e dá para trocá-lo no campo do painel.</li>
+        <li><b>Letreiro e logo:</b> o letreiro tem fita LED de retroiluminação dentro da testeira, na frente e nas duas laterais, ligada por 3 subidas curtas do tronco de 24 V. O halo do logo se liga ao mesmo tronco, por uma derivação atrás do disco. As duas cargas entram na fonte única do QGBT.</li>
         <li><b>LED das vitrines:</b> o cabo de 24 V desce pelo pilar do canto frontal direito, entra numa caixa de passagem sob o vidro e sai em 4 rabichos pretos até as pontas dos 4 perfis (2 na frente, 2 na lateral). No modo infraestrutura o caminho aparece em amarelo.</li>
         <li><b>Fiação simplificada:</b> 4 circuitos, cada um com função clara: C1 máquinas, C2 relojoeiro, nicho do ar e C4 (LED, roteador e câmera). Saíram 2 tomadas industriais e 1 tomada do relojoeiro. As rotas passam por dentro do metalon e não cruzam mais a folha da porta. A fonte LED é uma só, no QGBT, e a fita da sanca se alimenta pelas pontas.</li>
         <li><b>Rede:</b> roteador Wi-Fi no painel de fundo, acima do QGBT, com antenas livres e duas tomadas 10A ao lado (roteador e câmera). A internet entra por um eletroduto de dados pelo piso e sobe dentro do pilar do canto traseiro esquerdo, usando o passa-cabo do metalon. A câmera é uma só, Wi-Fi, só com energia. O sensor infravermelho foi retirado.</li>
@@ -253,7 +254,7 @@ const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 
 /* ---------- acumuladores do BOM (preenchidos pela própria geometria) ---------- */
 const Q={};
-(function reset(){Object.assign(Q,{ripaLen:{},ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,router:0,qgbt:0,cab:{m25:0,m15:0,lv:0,data:0},conduit:0,shared:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
+(function reset(){Object.assign(Q,{ripaLen:{},ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,ledSign:0,t10:0,t20:0,cftv:0,router:0,qgbt:0,cab:{m25:0,m15:0,lv:0,data:0},conduit:0,shared:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
 
 const S={night:false,closed:false,infra:false,dims:false,closure:'lona',floor:'existente',density:'max',cooler:'portatil'};
 
@@ -508,6 +509,7 @@ const rollers=[]; // {mesh}
   // fundo: pele fina por fora para o painel branco seguir inteiro até 2,40 m
   const back=new T.Mesh(new T.BoxGeometry(4,H-TY0,.02),[M.black,M.black,M.black,M.metal,M.black,M.black]); // fundo: testeira preta lisa, sem letreiro
   back.position.set(0,(y0+y1)/2,ZB+.01); g.add(back);
+  Q.ledSign+=4+2*(2.3-.14); // fita LED de retroiluminação do letreiro: frente e as duas laterais
   // caixas de recolhimento dentro da testeira
   const rm=std(0x8a9096,.35,.8);
   const roll=(len,axis,x,y,z)=>{ const c=cyl(g,rm,.06,len,x,y,z,axis,16); rollers.push(c); Q.caixas++; };
@@ -848,6 +850,13 @@ function buildTrays(){
   wire([[1.84,1.06,.51],[1.55,1.06,.51]]);                          // perfil lateral, fileira 2
   [[[1.84,1.07,.99],[1.84,1.07,.95],[1.89,1.07,.95]],[[1.84,1.07,.95],[1.84,1.07,.70],[1.89,1.07,.70]],[[1.84,1.07,.70],[1.84,1.07,.51],[1.80,1.07,.51]],[[1.84,1.07,.51],[1.55,1.07,.51]]].forEach(p=>route(NEON.C4,p,.014)); // mesmos rabichos, em amarelo no modo infraestrutura
   route(NEON.C4,[[-1.66,2.08,-1.11],[-1.94,2.08,-1.11]],0,{kind:'lv'});
+  // letreiro (frente e laterais): 3 subidas curtas do tronco até a fita LED dentro da testeira
+  route(NEON.C4,[[1.98,2.08,-1.11],[1.98,2.27,-1.11]],.016,{kind:'lv'}); route(NEON.C4,[[1.98,2.27,-1.11],[1.98,2.27,1.0]],.012);       // lateral direita
+  route(NEON.C4,[[1.98,2.08,1.13],[1.98,2.27,1.13]],.016,{kind:'lv'});  route(NEON.C4,[[1.98,2.27,1.09],[-1.94,2.27,1.09]],.012);       // frente
+  route(NEON.C4,[[-1.94,2.08,-1.11],[-1.94,2.27,-1.11]],.016,{kind:'lv'}); route(NEON.C4,[[-1.94,2.27,-1.11],[-1.94,2.27,1.0]],.012);  // lateral esquerda
+  // halo LED do logo: derivação do tronco para o anel
+  route(NEON.C4,[[.34,2.08,-1.115],[.34,2.0,-1.115]],.016,{kind:'lv'});
+  { const lr=new T.Mesh(new T.TorusGeometry(.435*.87,.012,8,64),nm(NEON.C4,.95)); lr.position.set(0,1.85,-1.09); lr.renderOrder=12; G.neon.add(lr); }
   // câmera Wi-Fi: só o cabo da própria fonte, do lado do roteador até o canto
   route(NEON.CFTV,[[-1.46,1.97,-1.12],[-1.46,2.13,-1.12],[-1.84,2.13,-1.12],[-1.84,2.13,-1.03]],.016,{kind:'cord'});
   // rede: eletroduto de dados entra pelo piso no pilar do canto, sobe dentro do metalon (passa-cabo) até o roteador
@@ -860,6 +869,8 @@ function buildTrays(){
   tag('C4 · QGBT · fonte LED 24 V + rede',-1.7,2.22,-1.0,NEON.C4);
   tag('Opção A · 20A dedicada, no eletroduto do C1',1.18,1.0,-.7,NEON.AR);
   tag('Câmera Wi-Fi ×1 · só energia',-1.35,2.22,-.9,NEON.CFTV);
+  tag('Letreiro: fita LED nas 3 faces, 24 V do tronco',0,2.46,1.0,NEON.C4);
+  tag('Halo do logo: derivação do tronco, 24 V',0,1.35,-1.0,NEON.C4);
   tag('Roteador Wi-Fi + tomada dupla',-1.0,2.0,-1.0,NEON.NET);
   tag('Dados: entrada pelo piso, sobe no pilar',-1.55,.7,-1.0,NEON.NET);
 })();
@@ -1052,7 +1063,7 @@ $('#legend').innerHTML=[['C1','Circuito 1 · máquinas do chaveiro, 4× 10A'],['
 const prev={};
 function renderBOM(){
   const curtArea=(4.00+2.30+.56)*DROP_V+1.00*(TY0-PAINEL_H), cKind=S.closure==='micro'?'microperfurada':'lona náutica';
-  const ledW=Q.ledVit*10+Q.ledSanca*7+Q.ledHalo*10, ledPsu=Math.ceil(ledW*1.25/50)*50;
+  const ledW=Q.ledVit*10+Q.ledSanca*7+Q.ledHalo*10+Q.ledSign*7, ledPsu=Math.ceil(ledW*1.25/50)*50;
   const chTot=Q.chist.reduce((a,b)=>a+b,0), cooler=S.cooler==='portatil'?'Ar-condicionado portátil':'Climatizador evaporativo';
   const metalonBars=Math.ceil(Q.metalon*1.1/6);
   const rows=[
@@ -1067,7 +1078,7 @@ function renderBOM(){
     ['t20','Tomadas 20A',`${Q.t20} un`,'só a dedicada do nicho do ar-condicionado'],
     ['t10','Tomadas 10A',`${Q.t10} un`,'3 do relojoeiro, 4 das máquinas (régua) e 2 numa caixa dupla para roteador e câmera Wi-Fi'],
     ['dr','Quadro QGBT com DR 30 mA, DPS e 4 disjuntores',`${Q.qgbt} un`,'C1 máquinas, C2 relojoeiro, nicho do ar e C4 (LED e rede); perto da porta de entrada'],
-    ['psu','Fonte LED 24 V única, dentro do QGBT',`${ledPsu} W`,`${fmt(ledW,0)} W de LED (vitrines ${fmt(Q.ledVit)} m, sanca ${fmt(Q.ledSanca)} m, halo ${fmt(Q.ledHalo)} m) com 25 % de folga; substitui as fontes espalhadas`],
+    ['psu','Fonte LED 24 V única, dentro do QGBT',`${ledPsu} W`,`${fmt(ledW,0)} W de LED (vitrines ${fmt(Q.ledVit)} m, sanca ${fmt(Q.ledSanca)} m, letreiro ${fmt(Q.ledSign)} m, halo do logo ${fmt(Q.ledHalo)} m) com 25 % de folga; substitui as fontes espalhadas`],
     ['cab25','Cabo 2,5 mm² (C1, C2 e nicho)',`${fmt(Q.cab.m25*3,0)} m`,`${fmt(Q.cab.m25)} m de trajeto × 3 condutores (fase, neutro, terra)`],
     ['cab15','Cabo 1,5 mm² (caixa dupla)',`${fmt(Q.cab.m15*3,0)} m`,`${fmt(Q.cab.m15)} m de trajeto × 3 condutores`],
     ['cablv','Cabo 24 V 1,5 mm² (LED)',`${fmt(Q.cab.lv*2,0)} m`,`${fmt(Q.cab.lv)} m de trajeto × 2 condutores; a fita da sanca se alimenta pelas pontas`],
@@ -1088,6 +1099,7 @@ function renderBOM(){
     ['mt','Metalon 40×40 chumbo',`${fmt(Q.metalon)} m`,`${metalonBars} barras de 6 m com 10 % de perda`],
     ['led1','Perfil LED 4000K IRC>95 (vitrines)',`${fmt(Q.ledVit)} m`,'uma linha sobre cada fileira de chisteiras'],
     ['led2','Fita LED 3000K (sanca da testeira)',`${fmt(Q.ledSanca)} m`,'iluminação indireta quente'],
+    ['led4','Fita LED do letreiro (retroiluminação)',`${fmt(Q.ledSign)} m`,'dentro da testeira, na frente e nas duas laterais; alimentada por 3 subidas do tronco de 24 V'],
     ['led3','Halo LED branco do logo',`${fmt(Q.ledHalo)} m`,'contorno do disco preto'],
     ['rp','Madeira ripada (ripas 35 × 20 mm)',`${fmt(Q.ripaA)} m²`,`${Q.ripas} ripas verticais · ${fmt(Q.ripaM)} m lineares, vão de 15 mm sobre o chumbo · compra com 10 % de perda: ${fmt(Q.ripaA*1.1)} m²`],
     ['mc','MDF Cinza Chumbo',`${fmt(Q.mdfC+Q.mdfB)} m²`,`${fmt(Q.mdfC)} m² de bases, bancadas, nicho e porta + ${fmt(Q.mdfB)} m² de painel de fundo liso, forros e mini painel do relojoeiro`],
