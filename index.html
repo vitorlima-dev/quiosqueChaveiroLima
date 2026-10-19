@@ -214,7 +214,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Bancada do relojoeiro:</b> 1,60 m nominais, sendo 0,60 m o módulo de canto da vitrine. O comprimento livre de trabalho é 1,00 m.</li>
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine e 1,00 m sobre o mini painel. Um poste de metalon em z = 0,55 m divide os dois.</li>
-        <li><b>Placa da loja:</b> fundo preto e "CHAVEIRO LIMA" em branco, grande, centrado e com as letras espaçadas, sem filetes nem símbolos. O telefone de contato (fictício, (11) 91234-5678) fica sem moldura, no canto direito da frente e do fundo, e dá para trocá-lo no campo do painel.</li>
+        <li><b>Placa da loja:</b> fundo preto e "CHAVEIRO LIMA" em branco, grande, centrado e com as letras espaçadas, sem filetes nem símbolos. O telefone de contato (fictício, (11) 91234-5678) fica sem moldura, no canto direito da frente, e dá para trocá-lo no campo do painel.</li>
         <li><b>Testeira de 25 cm:</b> para a porta de 0,70 × 2,10 m, a testeira passou de 35 para 25 cm (cota 2,15 a 2,40 m). As persianas ficaram 10 cm mais longas e o letreiro mais baixo.</li>
         <li><b>Pilar central retirado:</b> a frente não tem mais o pilar intermediário de metalon (x = -0,30 m), então a testeira vence os 4,00 m só apoiada nos cantos. A persiana da frente passou a ser um rolo único de 4,00 m, com duas guias. As seções Relojoaria e Chaveiro seguem separadas só no mostruário. Vale o cálculo do seu serralheiro: a testeira carrega as caixas de recolhimento e a sanca, e um vão de 4 m pode flechar.</li>
         <li><b>Loja fechada:</b> o vidro da vitrine recuou 6 cm da face externa, e as persianas descem nesse canal até o tampo da base de madeira (0,76 m), cobrindo o vidro e os produtos. Nos cantos as persianas se cruzam e a porta sobe até a travessa de topo, sem fresta. Conferi por traçado de raios, de 3,2 e 5 m de distância e de 0,7 a 2,0 m de altura, a cada 6°: nenhum dos 632 pontos de produto testados aparece. A cobertura do quiosque não está modelada, então a verificação vale para quem olha de fora na altura da rua.</li>
@@ -352,7 +352,7 @@ function spaced(cx,text,x,y,sp,align){
   let px = align==='center'? x-tot/2 : x;
   [...text].forEach((c,i)=>{cx.fillText(c,px,y); px+=ws[i]+sp;});
 }
-/* letreiro: fundo preto e letras brancas. Leva o nome e, na frente e no fundo, o telefone de contato (editável no painel). */
+/* letreiro: fundo preto e letras brancas. Leva o nome nos três lados visíveis e o telefone só na frente (editável no painel). */
 const STORE={tel:'(11) 91234-5678'}; // telefone de contato fictício, editável no painel
 const letreiros=[];
 function texLetreiro(wM,hM,withNum){
@@ -500,7 +500,7 @@ const rollers=[]; // {mesh}
   const R=mk(XR-th,XR,ZB+.02,ZF-th,[lmat(2.16),M.black,M.black,M.metal,M.black,M.black]);   // direita: face +x
   const L=mk(XL,XL+th,ZB+.02,ZF-th,[M.black,lmat(2.16),M.black,M.metal,M.black,M.black]);   // esquerda: face -x
   // fundo: pele fina por fora para o painel branco seguir inteiro até 2,40 m
-  const back=new T.Mesh(new T.BoxGeometry(4,H-TY0,.02),[M.black,M.black,M.black,M.metal,M.black,lmat(4,true)]);
+  const back=new T.Mesh(new T.BoxGeometry(4,H-TY0,.02),[M.black,M.black,M.black,M.metal,M.black,M.black]); // fundo: testeira preta lisa, sem letreiro
   back.position.set(0,(y0+y1)/2,ZB+.01); g.add(back);
   // caixas de recolhimento dentro da testeira
   const rm=std(0x8a9096,.35,.8);
