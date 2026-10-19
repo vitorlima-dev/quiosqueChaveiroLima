@@ -210,7 +210,7 @@ details li b{color:var(--ink);font-weight:600}
       <summary>Premissas e ajustes do modelo</summary>
       <ul>
         <li><b>Esquerda e direita</b> seguem o croqui do projeto: bancada do relojoeiro e relojoaria na esquerda, vitrine em L (Outros) e nicho na direita. Na rua, olhando a fachada, a bancada do relojoeiro fica à direita. A planta baixa mostra a frente no topo, como no croqui.</li>
-        <li><b>Seções:</b> 30 / 50 / 20 % é a divisão comercial do mix. Os comprimentos físicos são 1,70 m, 2,30 m (frente) e 1,70 m (lateral).</li>
+        <li><b>Seções:</b> 30 / 50 / 20 % é a divisão comercial do mix. Os comprimentos físicos são 1,70 m, 2,30 m (frente) e 1,65 m (lateral, que termina na face do painel de fundo).</li>
         <li><b>Bancada do relojoeiro:</b> 1,60 m nominais, sendo 0,60 m o módulo de canto da vitrine. O comprimento livre de trabalho é 1,00 m.</li>
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine e 1,00 m sobre o mini painel. Um poste de metalon em z = 0,55 m divide os dois.</li>
@@ -242,6 +242,8 @@ const $ = s => document.querySelector(s);
 const REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- dimensões (metros). X: esquerda(-) a direita(+) vista da rua. Z: fundo(-) a frente(+). ---------- */
+const ZF_=1.15, VD_=.60;
+const LAT_L=ZF_-VD_+1.10; // comprimento da vitrine lateral: termina na face interna do painel de fundo (z = -1,10 m), sem atravessá-lo
 const BANCADA_X0=-.56, MACH_ZF=-.55; // bancada de máquinas: começa em x = -0,56 m (0,80 m de passagem até a bancada do relojoeiro) e tem 0,55 m de profundidade (corredor de 1,10 m)
 const XL=-2, XR=2, ZF=1.15, ZB=-1.15, H=2.4, TY0=2.15, CTR=1.10, VD=0.60, PAINEL_H=1.30, GV=.06, SILL=.76, DROP_V=TY0-SILL; // GV: recuo do vidro da vitrine (canal da persiana); SILL: tampo da base de madeira, onde a persiana assenta. PAINEL_H: PAINEL_H: altura do mini painel do posto de relógios
 const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
@@ -473,7 +475,7 @@ const pane=(par,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,M.glass,x0,x1,y0,y1,z0,z1); 
   [[XL,XR,TY0-.04,TY0,ZF-t,ZF],[XL,XR,TY0-.04,TY0,ZB,ZB+t],[XL,XL+t,TY0-.04,TY0,ZB,ZF],[XR-t,XR,TY0-.04,TY0,ZB,ZF]].forEach(a=>mt(g,...a));
   // travessas da vitrine em L, na cota do tampo (externa e interna)
   mt(g,XL+GV,XR-GV,CTR-.04,CTR,ZF-GV-.04,ZF-GV); mt(g,XL,1.4,CTR-.04,CTR,ZF-VD,ZF-VD+.04);
-  mt(g,XR-GV-.04,XR-GV,CTR-.04,CTR,ZB,ZF-GV); mt(g,1.4,1.44,CTR-.04,CTR,ZB,ZF-VD); mt(g,XL+GV,XL+GV+.04,CTR-.04,CTR,ZF-VD,ZF-GV);
+  mt(g,XR-GV-.04,XR-GV,CTR-.04,CTR,-1.10,ZF-GV); mt(g,1.4,1.44,CTR-.04,CTR,-1.10,ZF-VD); mt(g,XL+GV,XL+GV+.04,CTR-.04,CTR,ZF-VD,ZF-GV);
   // trilhos-guia da cortina (nos pilares, lado interno)
   const guideMat=std(0x45494d,.4,.7);
   const guide=(x0,x1,z0,z1,y0)=>{ y0=y0||SILL; bx(g,guideMat,x0,x1,y0,TY0,z0,z1); Q.trilho+=TY0-y0; Q.guias=(Q.guias||0)+1; };
@@ -652,7 +654,7 @@ const VEL=[0x1f2d4a,0x4a1822,0x1c3b33];
 (function buildVitrines(){
   const defs=[
     {id:'F',pos:[0,0,ZF],ry:0,x0:-2,x1:2,innerEnd:1.4},
-    {id:'L',pos:[XR,0,ZF-VD],ry:Math.PI/2,x0:0,x1:1.7,innerEnd:1.7}
+    {id:'L',pos:[XR,0,ZF-VD],ry:Math.PI/2,x0:0,x1:LAT_L,innerEnd:LAT_L}
   ];
   defs.forEach(d=>{
     const g=grp('Vitrine '+d.id,G.vit); g.position.set(...d.pos); g.rotation.y=d.ry; RUNS[d.id]=g;
@@ -700,7 +702,7 @@ function texWood(){
       Q.ripaLen[(y1-y0).toFixed(2)]=(Q.ripaLen[(y1-y0).toFixed(2)]||0)+1; list.push(axis==='x'?[p,(y0+y1)/2,c,W,y1-y0,D]:[c,(y0+y1)/2,p,D,y1-y0,W]); Q.ripaM+=y1-y0; Q.ripaA+=P*(y1-y0); }
   };
   run('x',XL+.045,XR-.045,ZF-D/2,.04,.75);        // frente (clientes)
-  run('z',ZB+.045,ZF-.045,XR-D/2,.04,.75);                    // lateral da vitrine em L
+  run('z',-1.10,ZF-.045,XR-D/2,.04,.75);                    // lateral da vitrine em L
   run('z',-.43,.53,XL+D/2,.04,PAINEL_H-.04);                  // mini painel do posto de relógios
   run('z',.57,ZF-.045,XL+D/2,.04,.75);                        // lateral do módulo de canto (Relojoaria)
   const im=new T.InstancedMesh(geo,mat,list.length), m=new T.Matrix4(), q=new T.Quaternion(), pos=new T.Vector3(), sc=new T.Vector3(), c=new T.Color();
@@ -723,7 +725,7 @@ function buildTrays(){
   disposeTrays();
   const cnt=COUNTS[S.density]; Q.chist=cnt.slice();
   const secs=[{run:'F',x0:-2+GV,L:1.7-GV,n:cnt[0],k:0},{run:'F',x0:-.3,L:2.3-GV,n:cnt[1],k:1}, // bandejas ficam dentro do vidro recuado
-    {run:'L',x0:0,L:1.7,n:cnt[2],k:2}];
+    {run:'L',x0:0,L:LAT_L,n:cnt[2],k:2}];
   const trays=[], items={watchCase:[],watchDial:[],strap:[],fob:[],btn:[],blade:[],rem:[],coin:[],cell:[]};
   const a=.24, Rx=new T.Matrix4().makeRotationX(a), tmp=new T.Matrix4();
   secs.forEach(s=>{
@@ -887,7 +889,7 @@ function setClosure(kind){ curtains.forEach(c=>{ c.cloth.material=curtMats[kind]
   // profundidade
   lineZ(ZB,ZF,XL-.65); put('2,30 m',XL-.65,.2,0);
   // lateral direita (seção Outros)
-  lineZ(ZB,ZF-VD,XR+.5); put('1,70 m',XR+.5,.2,-.3);
+  lineZ(-1.10,ZF-VD,XR+.5); put(fmt(LAT_L)+' m',XR+.5,.2,-.3);
   // altura
   const hm=bx(g,lm,XR+.55-th/2,XR+.55+th/2,0,H,ZF+.35-th/2,ZF+.35+th/2); hm.renderOrder=14; put('2,40 m',XR+.55,H+.12,ZF+.35);
   // passagem de entrada entre a bancada do relojoeiro e a bancada de máquinas
@@ -1097,7 +1099,7 @@ function renderAudit(){
     ['ok','Ripas',`${rb} barras de 2,50 m`,bars.map(x=>`${x.n} de ${fmt(x.L)} m, ${x.per} por barra`).join(' · ')+` · perda de ${Math.round(waste*100)} %`],
     ['ok','Metalon 40×40',`${mBars} barras de 6 m`,`${fmt(Q.metalon)} m líquidos mais 10 % de perda`],
     ['Uso por zona'],
-    ['ok','Frente e lateral em L','vitrine 5,70 m','mostruário de 42 a 48 chisteiras com estoque nas bases; nada de espaço morto'],
+    ['ok','Frente e lateral em L',`vitrine ${fmt(4+LAT_L)} m`,'mostruário de 42 a 48 chisteiras com estoque nas bases; nada de espaço morto'],
     ['ok','Fundo','painel + bancada','chaves e carcaças nos ganchos, máquinas, nicho do ar, QGBT'],
     ['ok','Lado do relojoeiro','bancada 1,00 m livre','posto técnico aberto para ventilar, com 4 tomadas e luminária'],
     ['ok','Entrada (canto traseiro esquerdo)','livre','sem móvel, por decisão do projeto: serve de manobra para a porta e de entrada para o corredor']
