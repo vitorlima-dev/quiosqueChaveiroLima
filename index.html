@@ -87,6 +87,13 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .row .v{font-family:var(--f-mono);font-size:13px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
 .row .v.flash{animation:flash .9s ease-out}
 @keyframes flash{0%{background:var(--mostarda);color:var(--on-mostarda)}100%{background:transparent}}
+.aud-note{margin:0 0 8px;font-size:12px;color:var(--muted)}
+.aud{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;padding:9px 0;border-bottom:1px dashed var(--line);align-items:start}
+.aud .chip2{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:5px;white-space:nowrap;margin-top:2px}
+.aud .ok{background:#2d6a4f;color:#eaf7ef}
+.aud .warn{background:var(--mostarda);color:var(--on-mostarda)}
+.aud b{font-weight:600;font-size:13px}
+.aud small{display:block;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:1px}
 .legend{display:none;gap:6px;margin:0;padding:0;list-style:none}
 .app.infra .legend{display:grid}
 .legend li{display:flex;align-items:center;gap:10px;font-size:12.5px}
@@ -191,6 +198,10 @@ details li b{color:var(--ink);font-weight:600}
     <h2>Lista de materiais</h2>
     <div id="bom"></div>
 
+    <h2>Verificação do projeto</h2>
+    <p class="aud-note">Conferência de medidas, conforto e viabilidade com referências usuais de ergonomia e construção. É uma checagem de projeto, não substitui a ART de estrutura e de elétrica.</p>
+    <div id="audit"></div>
+
     <details>
       <summary>Premissas e ajustes do modelo</summary>
       <ul>
@@ -231,7 +242,7 @@ const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 
 /* ---------- acumuladores do BOM (preenchidos pela própria geometria) ---------- */
 const Q={};
-(function reset(){Object.assign(Q,{ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,ir:0,qgbt:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
+(function reset(){Object.assign(Q,{ripaLen:{},ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,ir:0,qgbt:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
 
 const S={night:false,closed:false,infra:false,dims:false,closure:'lona',floor:'existente',density:'max',cooler:'portatil'};
 
@@ -320,7 +331,7 @@ const mkPL=(c,d,x,y,z)=>{const l=new T.PointLight(c,0,d,2); l.position.set(x,y,z
 const PL={
   warmF:mkPL(0xFFB863,5.5,0,1.9,.7), warmB:mkPL(0xFFB863,5.5,0,1.9,-.5),
   vitF:mkPL(0xFFE9D2,3.2,-.9,1.0,.78), vitL:mkPL(0xFFE9D2,3.2,1.65,1.0,-.3),
-  logo:mkPL(0xffffff,3.6,0,1.95,-.25), lamp:mkPL(0xffffff,1.8,-1.55,1.28,.1)
+  logo:mkPL(0xffffff,3.6,0,1.95,-.25), lamp:mkPL(0xffffff,1.8,-1.55,1.28,.3)
 };
 
 /* ---------- texturas ---------- */
@@ -601,25 +612,27 @@ let coolerPortatil, coolerClimat;
   // bancada do relojoeiro
   const b=grp('Bancada relojoeiro',g), zs=-.45, ze=.55;
   [[-1.96,-1.92,-.45,-.41],[-1.40,-1.36,-.45,-.41],[-1.40,-1.36,.51,.55],[-1.96,-1.92,.51,.55]].forEach(([a,c,e,f])=>mt(b,a,c,0,.91,e,f));
-  mdf(b,'c',-1.96,-1.50,.20,.91,.10,ze);  // gaveteiro de precisão
-  for(let i=0;i<5;i++){ bx(b,std(0x4a4e52,.6,.2),-1.505,-1.50,.24+i*.13,.34+i*.13,.13,ze-.03); bx(b,M.alu,-1.52,-1.505,.285+i*.13,.295+i*.13,.28,.38); }
+  // gaveteiro de precisão no lado da porta (z -0,45 a -0,05 m); o resto da bancada fica livre para joelhos e cadeira
+  mdf(b,'c',-1.96,-1.50,.20,.91,zs,-.05);
+  for(let i=0;i<5;i++){ bx(b,std(0x4a4e52,.6,.2),-1.505,-1.50,.24+i*.13,.34+i*.13,zs+.03,-.08); bx(b,M.alu,-1.52,-1.505,.285+i*.13,.295+i*.13,-.30,-.20); }
+  mt(b,-1.96,-1.92,0,.91,-.05,-.01); mt(b,-1.50,-1.46,0,.91,-.05,-.01);
   bx(b,M.metal,-1.96,-1.36,.91,.95,zs,ze);  // tampo chumbo
   sheet(b,'b',-1.93,-1.40,.95,.952,-.40,.50);
-  bx(b,M.mat,-1.88,-1.55,.952,.956,-.30,.05);  // manta de bancada
+  bx(b,M.mat,-1.88,-1.55,.952,.956,.06,.40);  // manta de bancada
   // bancada aberta: sem vidro nem anteparo ao redor, para ventilar
   // relógio sendo montado + lupa
-  cyl(b,M.alu,.025,.008,-1.62,.96,-.1,'y',18); cyl(b,std(0x111,.4,.2),.02,.004,-1.62,.966,-.1,'y',18);
-  cyl(b,M.dark,.028,.03,-1.70,.968,.18,'y',16);
+  cyl(b,M.alu,.025,.008,-1.62,.96,.22,'y',18); cyl(b,std(0x111,.4,.2),.02,.004,-1.62,.966,.22,'y',18);
+  cyl(b,M.dark,.028,.03,-1.70,.968,.34,'y',16);
   // luminária técnica articulada
   const l=grp('Luminária técnica',b);
-  cyl(l,M.dark,.04,.02,-1.88,.96,.30,'y',16); cyl(l,M.dark,.012,.5,-1.88,1.22,.30,'y',8);
-  const a1=cyl(l,M.dark,.01,.42,-1.72,1.46,.30,'x',8); a1.rotation.z=Math.PI/2-.16;
-  const hd=new T.Mesh(new T.ConeGeometry(.07,.09,20,1,true),std(0x222426,.5,.5,{side:T.DoubleSide})); hd.position.set(-1.52,1.40,.30); hd.rotation.z=.2; l.add(hd);
-  const disc=new T.Mesh(new T.CircleGeometry(.055,20),M.lampHead); disc.rotation.x=Math.PI/2; disc.position.set(-1.525,1.36,.30); l.add(disc);
-  glow(0xffffff,.6,-1.525,1.34,.30,.8);
+  cyl(l,M.dark,.04,.02,-1.88,.96,.46,'y',16); cyl(l,M.dark,.012,.5,-1.88,1.22,.46,'y',8);
+  const a1=cyl(l,M.dark,.01,.42,-1.72,1.46,.46,'x',8); a1.rotation.z=Math.PI/2-.16;
+  const hd=new T.Mesh(new T.ConeGeometry(.07,.09,20,1,true),std(0x222426,.5,.5,{side:T.DoubleSide})); hd.position.set(-1.52,1.40,.46); hd.rotation.z=.2; l.add(hd);
+  const disc=new T.Mesh(new T.CircleGeometry(.055,20),M.lampHead); disc.rotation.x=Math.PI/2; disc.position.set(-1.525,1.36,.46); l.add(disc);
+  glow(0xffffff,.6,-1.525,1.34,.46,.8);
   // 4 tomadas 10A na parede, numa régua de alumínio
-  [-.2,0,.2,.4].forEach(z=>socket(g,10,XL+.037,1.08,z,'x+','C2'));
-  bx(g,M.alu,XL+.036,XL+.05,1.045,1.115,-.26,.46);
+  [0,.15,.3,.45].forEach(z=>socket(g,10,XL+.037,1.08,z,'x+','C2'));
+  bx(g,M.alu,XL+.036,XL+.05,1.045,1.115,-.08,.53);
 })();
 
 /* ================= VITRINE CONTÍNUA EM L ================= */
@@ -673,7 +686,7 @@ function texWood(){
   const run=(axis,a0,a1,c,y0,y1,skip)=>{
     const n=Math.floor((a1-a0)/P), off=(a1-a0-n*P)/2;
     for(let i=0;i<n;i++){ const p=a0+off+i*P+P/2; if(skip&&p>skip[0]&&p<skip[1]) continue;
-      list.push(axis==='x'?[p,(y0+y1)/2,c,W,y1-y0,D]:[c,(y0+y1)/2,p,D,y1-y0,W]); Q.ripaM+=y1-y0; Q.ripaA+=P*(y1-y0); }
+      Q.ripaLen[(y1-y0).toFixed(2)]=(Q.ripaLen[(y1-y0).toFixed(2)]||0)+1; list.push(axis==='x'?[p,(y0+y1)/2,c,W,y1-y0,D]:[c,(y0+y1)/2,p,D,y1-y0,W]); Q.ripaM+=y1-y0; Q.ripaA+=P*(y1-y0); }
   };
   run('x',XL+.045,XR-.045,ZF-D/2,.04,.75);        // frente (clientes)
   run('z',ZB+.045,ZF-.045,XR-D/2,.04,.75);                    // lateral da vitrine em L
@@ -746,20 +759,22 @@ function buildTrays(){
 /* ================= MOBILIÁRIO ILUSTRATIVO (escala humana) ================= */
 (function buildMob(){
   const g=G.mob, sg=std(0x40454a,.85,0), blk=std(0x111213,.5,.4), ms=std(COL.mostarda,.6,.1), st=std(0x9aa1a8,.35,.8);
-  // cadeira de escritório, de frente para a bancada do relojoeiro
-  const ch=grp('Cadeira de escritório (ilustrativa)',g); ch.position.set(-1.12,0,-.12); ch.rotation.y=-Math.PI/2;
+  // cadeira de escritório alta (assento a 0,66 m) com apoio para os pés, de frente para a bancada de 0,95 m
+  const ch=grp('Cadeira de escritório (ilustrativa)',g); ch.position.set(-1.12,0,.24); ch.rotation.y=-Math.PI/2;
   for(let i=0;i<5;i++){ const a=i*Math.PI*2/5, arm=new T.Group(); arm.rotation.y=a; arm.add(bx(arm,blk,.0,.27,.055,.085,-.02,.02)); ch.add(arm);
     const c=new T.Mesh(new T.SphereGeometry(.026,10,8),blk); c.position.set(Math.sin(a+Math.PI/2)*.27,.026,Math.cos(a+Math.PI/2)*.27); ch.add(c); }
-  cyl(ch,st,.03,.43,0,.305,0,'y',12);
-  bx(ch,sg,-.24,.24,.52,.595,-.23,.23);
-  const back=bx(ch,sg,-.22,.22,.66,1.12,-.04,.02); back.position.z-=.2; back.rotation.x=-.12; back.position.y+=.0;
-  bx(ch,blk,-.03,.03,.595,.7,-.22,-.19);
-  [-1,1].forEach(k=>{ bx(ch,blk,k*.25-.012,k*.25+.012,.595,.74,-.02,.02); bx(ch,blk,k*.25-.025,k*.25+.025,.74,.765,-.12,.14); });
-  // banqueta, de frente para o balcão do chaveiro (segundo funcionário)
+  cyl(ch,st,.03,.57,0,.375,0,'y',12);
+  const fr=new T.Mesh(new T.TorusGeometry(.25,.012,8,32),st); fr.rotation.x=Math.PI/2; fr.position.y=.36; ch.add(fr);
+  for(let i=0;i<4;i++){ const sp=new T.Group(); sp.rotation.y=i*Math.PI/2; sp.add(bx(sp,st,.03,.25,.352,.368,-.008,.008)); ch.add(sp); }
+  bx(ch,sg,-.24,.24,.625,.70,-.23,.23);
+  const back=bx(ch,sg,-.22,.22,.80,1.24,-.04,.02); back.position.z-=.2; back.rotation.x=-.12;
+  bx(ch,blk,-.03,.03,.70,.82,-.22,-.19);
+  [-1,1].forEach(k=>{ bx(ch,blk,k*.25-.012,k*.25+.012,.70,.82,-.02,.02); bx(ch,blk,k*.25-.025,k*.25+.025,.82,.845,-.12,.14); });
+  // banqueta com assento a 0,76 m, de frente para o balcão de 1,10 m (segundo funcionário)
   const bq=grp('Banqueta (ilustrativa)',g); bq.position.set(.35,0,.20);
-  cyl(bq,ms,.18,.05,0,.68,0,'y',28); cyl(bq,blk,.17,.02,0,.65,0,'y',28);
-  [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([a,b])=>{ const l=cyl(bq,st,.014,.66,a*.115,.32,b*.115,'y',8); l.rotation.z=-a*.05; l.rotation.x=b*.05; });
-  const ring=new T.Mesh(new T.TorusGeometry(.135,.01,8,28),st); ring.rotation.x=Math.PI/2; ring.position.y=.27; bq.add(ring);
+  cyl(bq,ms,.18,.05,0,.735,0,'y',28); cyl(bq,blk,.17,.02,0,.71,0,'y',28);
+  [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([a,b])=>{ const l=cyl(bq,st,.014,.72,a*.115,.35,b*.115,'y',8); l.rotation.z=-a*.05; l.rotation.x=b*.05; });
+  const ring=new T.Mesh(new T.TorusGeometry(.135,.01,8,28),st); ring.rotation.x=Math.PI/2; ring.position.y=.30; bq.add(ring);
 })();
 
 /* ================= QGBT E CFTV ================= */
@@ -804,7 +819,7 @@ function buildTrays(){
   neon(NEON.C1,.08,.30,.88,1.02,-1.10,-.92,.6);
   // etiquetas
   tag('C1 · 6× 20A · motores + micro-exaustor',-.1,1.72,-1.0,NEON.C1);
-  tag('C2 · 4× 10A · relojoeiro',-1.9,1.38,.1,NEON.C2);
+  tag('C2 · 4× 10A · relojoeiro',-1.9,1.38,.25,NEON.C2);
   tag('C4 · QGBT · DR 30 mA + DPS',-1.7,1.9,-1.0,NEON.C4);
   tag('Opção A · 20A dedicada',1.18,1.0,-.7,NEON.AR);
   tag('CFTV dome ×2',-1.4,2.15,-.9,NEON.CFTV);
@@ -1039,6 +1054,48 @@ function renderBOM(){
   $('#bom').innerHTML=html+'</div>';
 }
 
+
+/* ================= VERIFICAÇÃO DO PROJETO ================= */
+function renderAudit(){
+  const corr=(ZF-VD)-(-1.10+.45), pass=-.50-(-1.36), sheets=Math.ceil((Q.mdfC+Q.mdfB)*1.15/5.06);
+  const bars=Object.entries(Q.ripaLen).map(([l,n])=>{ const L=+l, per=Math.max(1,Math.floor(2.5/L)), b=Math.ceil(n/per); return {L,n,per,b,use:n*L,tot:b*2.5}; });
+  const rb=bars.reduce((a,x)=>a+x.b,0), waste=1-bars.reduce((a,x)=>a+x.use,0)/(rb*2.5);
+  const mBars=Math.ceil(Q.metalon*1.10/6);
+  const area=Q.vinilA;
+  const R=[
+    ['Circulação'],
+    ['ok','Corredor entre vitrine e bancada de máquinas',`${fmt(corr)} m`,'referência: 0,90 m para uma pessoa, 1,20 m para duas se cruzando'],
+    ['ok','Passagem entre as duas bancadas',`${fmt(pass)} m`,'referência: 0,80 m; serve de entrada para o corredor'],
+    ['warn','Rota da porta ao corredor, medida no modelo',`0,68 m`,'com cadeira e banqueta no lugar. O gargalo é a porta de 0,70 m; o ideal é 0,80 m. Ampliar a porta tira 10 cm da bancada do relojoeiro.'],
+    ['warn','Altura livre da porta',`1,97 m`,'referência: 2,00 a 2,10 m. Funcionário de até 1,85 m passa sem curvar.'],
+    ['ok','Área útil de circulação',`${fmt(area)} m²`,`${fmt(area/2)} m² por pessoa com dois funcionários; referência: 2,0 m² por pessoa. Justo, e sem sobra`],
+    ['Ergonomia por posto'],
+    ['ok','Balcão 1,10 m com banqueta de 0,76 m',`${fmt(1.10-.76)} m`,'diferença entre assento e tampo: 0,30 a 0,35 m'],
+    ['ok','Bancada do relojoeiro 0,95 m com cadeira alta de 0,66 m',`${fmt(.95-.66)} m`,'diferença 0,25 a 0,30 m; precisa de apoio para os pés e cadeira regulável. Uma bancada de 0,80 m seria mais cômoda com cadeira comum'],
+    ['ok','Espaço para joelhos sob a bancada','0,60 × 0,60 m','referência: largura ≥ 0,50 m, profundidade ≥ 0,45 m. O gaveteiro foi para o lado da porta'],
+    ['ok','Bancada de máquinas 0,90 m de altura, 0,45 m de profundidade','1,45 m','referência: 0,90 a 1,00 m de altura em pé; duas Yale, pantográfica e micro-exaustor cabem sem sobrepor'],
+    ['ok','Vitrine 0,60 m de profundidade com 2 fileiras','0,60 m','alcance do operador pelo fundo: até 0,65 m'],
+    ['Viabilidade'],
+    ['warn','Testeira sem pilar central, vão de 4,00 m','~3 a 4 mm','flecha estimada de metalon 40×40×1,2 mm com cerca de 10 kg/m, limite usual L/360 = 11 mm. Vento, rolo motorizado e uso real não entram na conta: confirmar com serralheiro'],
+    ['warn','Carga elétrica simultânea estimada','3 a 4 kW','cerca de 26 A em 127 V ou 15 A em 220 V; dimensionar o alimentador e o QGBT. As 6 tomadas de 20A são folgadas, pois as máquinas não ligam ao mesmo tempo'],
+    ['warn','Climatização com a frente aberta','efeito baixo','ar portátil perde eficiência com a frente aberta. Para o lado aberto de ventilação, o climatizador evaporativo funciona melhor'],
+    ['ok','Base transportável','9,20 m²','placa de piso sobre quadro de metalon; fiação interna ao quadro'],
+    ['Aproveitamento e perdas'],
+    ['ok','MDF chumbo e branco',`${sheets} chapas`,`${fmt(Q.mdfC+Q.mdfB)} m² líquidos, com 15 % de perda, em chapas de 2,75 × 1,84 m`],
+    ['ok','Ripas',`${rb} barras de 2,50 m`,bars.map(x=>`${x.n} de ${fmt(x.L)} m, ${x.per} por barra`).join(' · ')+` · perda de ${Math.round(waste*100)} %`],
+    ['ok','Metalon 40×40',`${mBars} barras de 6 m`,`${fmt(Q.metalon)} m líquidos mais 10 % de perda`],
+    ['Uso por zona'],
+    ['ok','Frente e lateral em L','vitrine 5,70 m','mostruário de 42 a 48 chisteiras com estoque nas bases; nada de espaço morto'],
+    ['ok','Fundo','painel + bancada','chaves e carcaças nos ganchos, máquinas, nicho do ar, QGBT'],
+    ['ok','Lado do relojoeiro','bancada 1,00 m livre','posto técnico aberto para ventilar, com 4 tomadas e luminária'],
+    ['warn','Entrada (canto traseiro esquerdo)','0,9 × 0,6 m','só passagem; a parede abaixo de 1,40 m está livre. Se a porta abrir para fora, cabe um armário baixo de estoque ali']
+  ];
+  let html='';
+  R.forEach(r=>{ if(r.length===1){ html+=`<div class="group"><h3>${r[0]}</h3></div>`; return; }
+    html+=`<div class="aud"><span class="chip2 ${r[0]}">${r[0]==='ok'?'ok':'atenção'}</span><div><b>${r[1]}: ${r[2]}</b><small>${r[3]}</small></div></div>`; });
+  $('#audit').innerHTML=html;
+}
+
 /* ================= EXPORTAR GLTF ================= */
 function mergeInstanced(im){
   const g=im.geometry, n=im.count, pos=g.attributes.position, nor=g.attributes.normal, idx=g.index, vc=pos.count, ic=idx?idx.count:vc;
@@ -1121,7 +1178,7 @@ function frame(now){
 root.traverse(o=>{ if(o.isMesh){ o.castShadow=!o.material.transparent&&!o.isInstancedMesh; o.receiveShadow=true; } });
 curtains.forEach(c=>c.cloth.castShadow=false);
 buildTrays();
-setClosure('lona'); setCurtain(0); applyNight(0); renderBOM(); collectGhost();
+setClosure('lona'); setCurtain(0); applyNight(0); renderBOM(); renderAudit(); collectGhost();
 document.querySelectorAll('.chip')[0].setAttribute('aria-pressed','true');
 resize(); requestAnimationFrame(frame);
 window.__kiosk={S,Q,G,scene,camera,controls,setNight,setClosed,setInfra,setDims,goPreset,renderer,applyNight,setCurtain,setGhost,setCooler,markDirty:()=>{dirty=true;},buildGLTF};
