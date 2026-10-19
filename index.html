@@ -215,6 +215,7 @@ details li b{color:var(--ink);font-weight:600}
         <li><b>Corredor livre</b> resulta em 1,20 m entre a vitrine e a bancada de máquinas, acima do mínimo de 1,10 m.</li>
         <li><b>Posto do relojoeiro:</b> mini painel em MDF cinza chumbo até 1,30 m ao longo da bancada (1,00 m livres), com travessa de metalon no topo. Acima disso o lado fica aberto, sem vidro, para ventilar de dia. À noite a persiana fecha esse vão em dois rolos: 0,56 m sobre o canto da vitrine e 1,00 m sobre o mini painel. Um poste de metalon em z = 0,55 m divide os dois.</li>
         <li><b>Placa da loja:</b> fundo preto e "CHAVEIRO LIMA" em branco, grande, centrado e com as letras espaçadas, sem filetes nem símbolos. O telefone de contato (fictício, (11) 91234-5678) fica sem moldura, no canto direito da frente, e dá para trocá-lo no campo do painel.</li>
+        <li><b>Fiação simplificada:</b> 4 circuitos, cada um com função clara: C1 máquinas, C2 relojoeiro, nicho do ar e C4 (LED, roteador e câmera). Saíram 2 tomadas industriais e 1 tomada do relojoeiro. As rotas passam por dentro do metalon e não cruzam mais a folha da porta. A fonte LED é uma só, no QGBT, e a fita da sanca se alimenta pelas pontas.</li>
         <li><b>Rede:</b> roteador Wi-Fi no painel de fundo, acima do QGBT, com antenas livres e duas tomadas 10A ao lado (roteador e câmera). A internet entra por um eletroduto de dados pelo piso e sobe dentro do pilar do canto traseiro esquerdo, usando o passa-cabo do metalon. A câmera é uma só, Wi-Fi, só com energia. O sensor infravermelho foi retirado.</li>
         <li><b>Testeira de 25 cm:</b> para a porta de 0,70 × 2,10 m, a testeira passou de 35 para 25 cm (cota 2,15 a 2,40 m). As persianas ficaram 10 cm mais longas e o letreiro mais baixo.</li>
         <li><b>Pilar central retirado:</b> a frente não tem mais o pilar intermediário de metalon (x = -0,30 m), então a testeira vence os 4,00 m só apoiada nos cantos. A persiana da frente passou a ser um rolo único de 4,00 m, com duas guias. As seções Relojoaria e Chaveiro seguem separadas só no mostruário. Vale o cálculo do seu serralheiro: a testeira carrega as caixas de recolhimento e a sanca, e um vão de 4 m pode flechar.</li>
@@ -251,7 +252,7 @@ const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 
 /* ---------- acumuladores do BOM (preenchidos pela própria geometria) ---------- */
 const Q={};
-(function reset(){Object.assign(Q,{ripaLen:{},ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,router:0,qgbt:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
+(function reset(){Object.assign(Q,{ripaLen:{},ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,t10:0,t20:0,cftv:0,router:0,qgbt:0,cab:{m25:0,m15:0,lv:0,data:0},conduit:0,shared:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
 
 const S={night:false,closed:false,infra:false,dims:false,closure:'lona',floor:'existente',density:'max',cooler:'portatil'};
 
@@ -439,15 +440,18 @@ function glow(color,size,x,y,z,base){
 }
 
 /* ---------- tomadas ---------- */
-const NEON={C1:0xFF7A00,C2:0x00E5FF,C4:0xFFE600,AR:0xFF2BD6,CFTV:0xFF2D55,C3:0xA6FF00,NET:0x4D9DFF};
+const NEON={C1:0xFF7A00,C2:0x00E5FF,C4:0xFFE600,AR:0xFF2BD6,CFTV:0xFF2D55,NET:0x4D9DFF};
 const neonMats={}; const nm=(c,op)=>neonMats[c+'_'+op]||(neonMats[c+'_'+op]=new T.MeshBasicMaterial({color:lin(c),transparent:true,opacity:op,depthTest:false,depthWrite:false,toneMapped:false}));
 function neon(c,x0,x1,y0,y1,z0,z1,op){
   const m=bx(G.neon,nm(c,op==null?.55:op),x0,x1,y0,y1,z0,z1); m.renderOrder=12; return m;
 }
-function route(c,pts,th){
-  th=th||.022;
-  for(let i=0;i<pts.length-1;i++){ const a=pts[i],b=pts[i+1];
+function route(c,pts,th,opt){
+  th=th||.022; opt=opt||{}; let len=0;
+  for(let i=0;i<pts.length-1;i++){ const a=pts[i],b=pts[i+1]; len+=Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]);
     neon(c,Math.min(a[0],b[0])-th/2,Math.max(a[0],b[0])+th/2,Math.min(a[1],b[1])-th/2,Math.max(a[1],b[1])+th/2,Math.min(a[2],b[2])-th/2,Math.max(a[2],b[2])+th/2,.95); }
+  if(opt.kind) Q.cab[opt.kind]+=len;           // metros de cabo por tipo (por condutor-trajeto)
+  if(opt.kind!=='cord') Q.conduit+=len-(opt.shared||0);  // eletroduto / passa-cabo: o trecho compartilhado conta uma vez
+  return len;
 }
 function socket(par,amp,x,y,z,face,circ){
   const big=amp===20, w=big?.085:.072; const sg=new T.Group(); sg.position.set(x,y,z);
@@ -576,8 +580,8 @@ const air=[]; // setas de fluxo
   const ex=bx(g,M.graphite,.12,.30,.90,.99,-1.08,-.94); Q.exaustor++;
   for(let i=0;i<4;i++) bx(g,M.steel,.135+i*.04,.148+i*.04,.99,.996,-1.07,-.95);
   // régua 6x 20A na parede, acima das máquinas
-  bx(g,M.alu,-.25,.35,1.235,1.305,-1.10,-1.07);
-  for(let i=0;i<6;i++) socket(g,20,-.20+i*.1,1.27,-1.068,'z+','C1');
+  bx(g,M.alu,-.25,.25,1.235,1.305,-1.10,-1.07);
+  for(let i=0;i<4;i++) socket(g,10,-.18+i*.12,1.27,-1.068,'z+','C1');
 })();
 
 /* ================= NICHO TÉCNICO (OPÇÃO A) ================= */
@@ -645,8 +649,8 @@ let coolerPortatil, coolerClimat;
   const disc=new T.Mesh(new T.CircleGeometry(.055,20),M.lampHead); disc.rotation.x=Math.PI/2; disc.position.set(-1.525,1.36,.46); l.add(disc);
   glow(0xffffff,.6,-1.525,1.34,.46,.8);
   // 4 tomadas 10A na parede, numa régua de alumínio
-  [0,.15,.3,.45].forEach(z=>socket(g,10,XL+.037,1.08,z,'x+','C2'));
-  bx(g,M.alu,XL+.036,XL+.05,1.045,1.115,-.08,.53);
+  [0,.2,.4].forEach(z=>socket(g,10,XL+.037,1.08,z,'x+','C2'));
+  bx(g,M.alu,XL+.036,XL+.05,1.045,1.115,-.08,.48);
 })();
 
 /* ================= VITRINE CONTÍNUA EM L ================= */
@@ -806,10 +810,10 @@ function buildTrays(){
   [-1.76,-1.72,-1.68].forEach((x,i)=>bx(rt,i===0?M.green:M.alu,x-.007,x+.007,1.905,1.915,-1.07,-1.068));
   Q.router++;
   neon(NEON.NET,-1.81,-1.59,1.87,2.10,-1.11,-1.05,.6);
-  // 2 tomadas 10A ao lado: roteador e câmera Wi-Fi (circuito 3)
-  socket(g,10,-1.50,1.93,-1.068,'z+','C3'); socket(g,10,-1.38,1.93,-1.068,'z+','C3');
+  // 2 tomadas 10A numa caixa dupla ao lado: roteador e câmera Wi-Fi (circuito 4, com os LEDs)
+  bx(g,M.alu,-1.56,-1.36,1.885,1.975,-1.10,-1.07); socket(g,10,-1.50,1.93,-1.068,'z+','C4'); socket(g,10,-1.42,1.93,-1.068,'z+','C4'); // caixa dupla
   // fonte do roteador ligada à tomada (cabo curto por fora, à vista)
-  bx(rt,M.dark,-1.61,-1.52,1.925,1.93,-1.072,-1.068);
+  bx(rt,M.dark,-1.61,-1.51,1.925,1.93,-1.072,-1.068);
   // câmera dome Wi-Fi no canto superior traseiro, voltada para o balcão: só energia, sem cabo de rede
   const c=grp('Câmera dome Wi-Fi balcão',G.cftv); c.position.set(-1.84,TY0-.04,-1.03);
   cyl(c,M.dark,.05,.02,0,.0,0,'y',20); const dm=new T.Mesh(new T.SphereGeometry(.045,20,12,0,Math.PI*2,Math.PI/2,Math.PI/2),M.smoke); dm.position.y=-.01; c.add(dm);
@@ -822,29 +826,31 @@ function buildTrays(){
 
 /* ================= ROTAS ELÉTRICAS (infraestrutura) ================= */
 (function buildRoutes(){
-  const q=[-1.70,1.55,-1.08]; // QGBT
-  route(NEON.C1,[[-1.70,1.45,-1.12],[-1.70,1.27,-1.12],[-.25,1.27,-1.12]]);
-  route(NEON.C2,[[-1.78,1.50,-1.12],[-1.94,1.50,-1.12],[-1.94,1.50,-.45],[-1.94,1.08,-.45],[-1.94,1.08,.45]]);
-  route(NEON.C4,[[-1.66,1.78,-1.11],[-1.66,2.08,-1.11],[1.94,2.08,-1.11],[1.94,2.08,1.08],[-1.94,2.08,1.08],[-1.94,2.08,-1.0]]);
-  route(NEON.C4,[[1.94,2.08,1.08],[1.94,1.07,1.08]]);
-  route(NEON.C4,[[1.94,2.08,.4],[1.94,1.07,.4]]);
-  route(NEON.AR,[[-1.62,1.42,-1.12],[-1.62,.40,-1.12],[1.30,.40,-1.12],[1.30,.28,-1.12],[1.30,.28,-.88]]);
-  // C3: QGBT -> tomadas do roteador e da câmera; energia da câmera sobe pelo quadro de metalon até o canto
-  route(NEON.C3,[[-1.62,1.78,-1.12],[-1.62,1.93,-1.12],[-1.38,1.93,-1.12]]);
-  route(NEON.CFTV,[[-1.38,1.93,-1.12],[-1.38,2.13,-1.12],[-1.84,2.13,-1.12],[-1.84,2.13,-1.03]],.016);
+  // Princípio: o trajeto mais curto por dentro do metalon, sem cruzar a folha da porta, uma fonte LED única no QGBT
+  const C1=route(NEON.C1,[[-1.70,1.45,-1.12],[-1.70,1.27,-1.12],[-.25,1.27,-1.12]],0,{kind:'m25'});
+  // nicho do ar: sai pelo mesmo eletroduto do circuito 1 e segue na mesma altura até o fundo do nicho
+  route(NEON.AR,[[-1.70,1.45,-1.105],[-1.70,1.27,-1.105],[1.30,1.27,-1.105],[1.30,.28,-1.105],[1.30,.28,-.88]],0,{kind:'m25',shared:C1});
+  // posto do relojoeiro: sobe pelo pilar do canto, passa pela travessa de topo e desce pelo batente da porta; nada cruza a folha
+  route(NEON.C2,[[-1.78,1.50,-1.12],[-1.98,1.50,-1.13],[-1.98,2.13,-1.13],[-1.98,2.13,-.47],[-1.98,1.08,-.47],[-1.98,1.08,.40]],0,{kind:'m25'});
+  // circuito 4: caixa dupla (roteador e câmera) e fonte LED 24 V no QGBT
+  route(NEON.C4,[[-1.62,1.78,-1.12],[-1.62,1.93,-1.12],[-1.46,1.93,-1.12]],0,{kind:'m15'});
+  // LED 24 V: tronco no topo do fundo e pela testeira direita até o canto da vitrine; a fita da sanca se alimenta pelas pontas
+  route(NEON.C4,[[-1.66,1.78,-1.11],[-1.66,2.08,-1.11],[1.94,2.08,-1.11],[1.94,2.08,1.08],[1.94,1.07,1.08]],0,{kind:'lv'});
+  route(NEON.C4,[[-1.66,2.08,-1.11],[-1.94,2.08,-1.11]],0,{kind:'lv'});
+  // câmera Wi-Fi: só o cabo da própria fonte, do lado do roteador até o canto
+  route(NEON.CFTV,[[-1.46,1.97,-1.12],[-1.46,2.13,-1.12],[-1.84,2.13,-1.12],[-1.84,2.13,-1.03]],.016,{kind:'cord'});
   // rede: eletroduto de dados entra pelo piso no pilar do canto, sobe dentro do metalon (passa-cabo) até o roteador
-  route(NEON.NET,[[-1.98,.0,-1.13],[-1.98,1.93,-1.13],[-1.74,1.93,-1.12]],.018);
+  route(NEON.NET,[[-1.98,.0,-1.13],[-1.98,1.93,-1.13],[-1.74,1.93,-1.12]],.018,{kind:'data'});
   // micro-exaustor
   neon(NEON.C1,.10,.32,.88,1.02,-1.10,-.92,.6);
   // etiquetas
-  tag('C1 · 6× 20A · motores + micro-exaustor',.05,1.72,-1.0,NEON.C1);
-  tag('C2 · 4× 10A · relojoeiro',-1.9,1.38,.25,NEON.C2);
-  tag('C4 · QGBT · DR 30 mA + DPS',-1.7,1.9,-1.0,NEON.C4);
-  tag('Opção A · 20A dedicada',1.18,1.0,-.7,NEON.AR);
+  tag('C1 · 4× 10A · máquinas e exaustor',.05,1.72,-1.0,NEON.C1);
+  tag('C2 · 3× 10A · relojoeiro',-1.9,1.38,.25,NEON.C2);
+  tag('C4 · QGBT · fonte LED 24 V + rede',-1.7,2.22,-1.0,NEON.C4);
+  tag('Opção A · 20A dedicada, no eletroduto do C1',1.18,1.0,-.7,NEON.AR);
   tag('Câmera Wi-Fi ×1 · só energia',-1.35,2.22,-.9,NEON.CFTV);
-  tag('Roteador Wi-Fi',-1.0,2.0,-1.0,NEON.NET);
+  tag('Roteador Wi-Fi + tomada dupla',-1.0,2.0,-1.0,NEON.NET);
   tag('Dados: entrada pelo piso, sobe no pilar',-1.55,.7,-1.0,NEON.NET);
-  tag('C3 · 2× 10A · roteador e câmera',-1.0,1.78,-1.0,NEON.C3);
 })();
 function label(text,o){
   o=o||{}; const fs=o.fs||40, cv=document.createElement('canvas'), cx=cv.getContext('2d');
@@ -1028,13 +1034,14 @@ function updateView(){
 }
 
 /* legenda dos circuitos */
-$('#legend').innerHTML=[['C1','Circuito 1 · motores do chaveiro, 6× 20A'],['C2','Circuito 2 · bancada do relojoeiro, 4× 10A'],['C4','Circuito 4 · QGBT, DR 30 mA, DPS, fontes LED'],['AR','Opção A · tomada 20A do nicho e fluxo de ar'],['C3','Circuito 3 · roteador e câmera Wi-Fi, 2× 10A'],['NET','Rede · cabo de dados da entrada ao roteador'],['CFTV','Câmera dome Wi-Fi · só energia']]
+$('#legend').innerHTML=[['C1','Circuito 1 · máquinas do chaveiro, 4× 10A'],['C2','Circuito 2 · bancada do relojoeiro, 3× 10A'],['C4','Circuito 4 · fonte LED 24 V, roteador e câmera'],['AR','Opção A · tomada 20A do nicho, no eletroduto do C1'],['NET','Rede · cabo de dados da entrada ao roteador'],['CFTV','Câmera dome Wi-Fi · só energia']]
   .map(([k,t])=>{const c='#'+('000000'+NEON[k].toString(16)).slice(-6); return `<li><i style="background:${c};color:${c}"></i>${t}</li>`;}).join('');
 
 /* ================= BOM ================= */
 const prev={};
 function renderBOM(){
   const curtArea=(4.00+2.30+.56)*DROP_V+1.00*(TY0-PAINEL_H), cKind=S.closure==='micro'?'microperfurada':'lona náutica';
+  const ledW=Q.ledVit*10+Q.ledSanca*7+Q.ledHalo*10, ledPsu=Math.ceil(ledW*1.25/50)*50;
   const chTot=Q.chist.reduce((a,b)=>a+b,0), cooler=S.cooler==='portatil'?'Ar-condicionado portátil':'Climatizador evaporativo';
   const metalonBars=Math.ceil(Q.metalon*1.1/6);
   const rows=[
@@ -1046,9 +1053,15 @@ function renderBOM(){
     ['rt','Roteador Wi-Fi',`${Q.router} un`,'no painel de fundo, acima do QGBT; atende a câmera e o celular dos funcionários'],
     ['net','Entrada de internet','1 ponto','eletroduto de dados pelo piso e pelo pilar do canto traseiro esquerdo, com passa-cabo, até o roteador'],
     ['Pontos elétricos'],
-    ['t20','Tomadas 20A',`${Q.t20} un`,'6 industriais (motores) + 1 dedicada do nicho'],
-    ['t10','Tomadas 10A',`${Q.t10} un`,'4 do posto do relojoeiro, 1 do roteador e 1 da câmera Wi-Fi'],
-    ['dr','Quadro QGBT com DR 30 mA e DPS',`${Q.qgbt} un`,'perto da porta de entrada; circuito 4 alimenta LEDs'],
+    ['t20','Tomadas 20A',`${Q.t20} un`,'só a dedicada do nicho do ar-condicionado'],
+    ['t10','Tomadas 10A',`${Q.t10} un`,'3 do relojoeiro, 4 das máquinas (régua) e 2 numa caixa dupla para roteador e câmera Wi-Fi'],
+    ['dr','Quadro QGBT com DR 30 mA, DPS e 4 disjuntores',`${Q.qgbt} un`,'C1 máquinas, C2 relojoeiro, nicho do ar e C4 (LED e rede); perto da porta de entrada'],
+    ['psu','Fonte LED 24 V única, dentro do QGBT',`${ledPsu} W`,`${fmt(ledW,0)} W de LED (vitrines ${fmt(Q.ledVit)} m, sanca ${fmt(Q.ledSanca)} m, halo ${fmt(Q.ledHalo)} m) com 25 % de folga; substitui as fontes espalhadas`],
+    ['cab25','Cabo 2,5 mm² (C1, C2 e nicho)',`${fmt(Q.cab.m25*3,0)} m`,`${fmt(Q.cab.m25)} m de trajeto × 3 condutores (fase, neutro, terra)`],
+    ['cab15','Cabo 1,5 mm² (caixa dupla)',`${fmt(Q.cab.m15*3,0)} m`,`${fmt(Q.cab.m15)} m de trajeto × 3 condutores`],
+    ['cablv','Cabo 24 V 1,5 mm² (LED)',`${fmt(Q.cab.lv*2,0)} m`,`${fmt(Q.cab.lv)} m de trajeto × 2 condutores; a fita da sanca se alimenta pelas pontas`],
+    ['cabd','Cabo de dados Cat6 + eletroduto',`${fmt(Q.cab.data+3,0)} m`,`${fmt(Q.cab.data)} m dentro do quiosque + cerca de 3 m de ligação externa até a entrada de internet`],
+    ['cond','Eletroduto / passa-cabo no metalon',`${fmt(Q.conduit)} m`,'trajeto total, com o trecho do nicho dentro do eletroduto do C1; antes ficava em cerca de 24,6 m'],
     ['ex','Micro-exaustor de limalha',`${Q.exaustor} un`,'embutido no tampo da bancada de máquinas'],
     ['pts','Total de pontos',`${Q.t10+Q.t20+Q.qgbt}`,`${Q.t10+Q.t20} tomadas, ${Q.qgbt} quadro; roteador e câmera usam duas das tomadas`],
     ['Climatização · Opção A'],
@@ -1101,7 +1114,8 @@ function renderAudit(){
     ['ok','Vitrine 0,60 m de profundidade com 2 fileiras','0,60 m','alcance do operador pelo fundo: até 0,65 m'],
     ['Viabilidade'],
     ['warn','Testeira sem pilar central, vão de 4,00 m','~3 a 4 mm','flecha estimada de metalon 40×40×1,2 mm com cerca de 10 kg/m, limite usual L/360 = 11 mm. Vento, rolo motorizado e uso real não entram na conta: confirmar com serralheiro'],
-    ['warn','Carga elétrica simultânea estimada','3 a 4 kW','cerca de 26 A em 127 V ou 15 A em 220 V; dimensionar o alimentador e o QGBT. As 6 tomadas de 20A são folgadas, pois as máquinas não ligam ao mesmo tempo'],
+    ['warn','Carga elétrica simultânea estimada','~2,5 kW','Yale e pantográfica cerca de 0,9 kW, ar 1,2 kW, LED 0,2 kW, posto do relojoeiro e rede 0,2 kW. Cerca de 20 A em 127 V ou 11 A em 220 V. Quem dimensiona o alimentador e o QGBT é o eletricista'],
+    ['ok','Fiação simplificada',`${fmt(Q.conduit)} m de eletroduto`,'contra cerca de 24,6 m antes. Fonte LED única, tronco único no topo, nicho no eletroduto do C1, circuito de rede junto com os LEDs, tomadas das máquinas em 10A'],
     ['warn','Climatização com a frente aberta','efeito baixo','ar portátil perde eficiência com a frente aberta. Para o lado aberto de ventilação, o climatizador evaporativo funciona melhor'],
     ['ok','Base transportável','9,20 m²','placa de piso sobre quadro de metalon; fiação interna ao quadro'],
     ['Aproveitamento e perdas'],
