@@ -540,7 +540,7 @@ let logoMat, haloMat;
   Q.ledHalo+=2*Math.PI*.435*.87;
   glow(0xffffff,1.9,0,1.85,-1.097,.7); // atrás do disco e do halo, só lava a parede
   // ganchos com chaves e carcaças
-  const pts=[]; for(let y=1.50;y<=2.13;y+=.125) for(let x=-1.92;x<=1.92;x+=.13){ if(Math.abs(x)<.60) continue; if(Math.abs(x+1.7)<.24&&Math.abs(y-1.58)<.30) continue; if(x<-1.30&&y>1.80&&y<2.06) continue; pts.push([x,y]); }
+  const pts=[]; for(let y=1.50;y<=2.13;y+=.125) for(let x=-1.92;x<=1.92;x+=.13){ if(Math.abs(x)<.60) continue; if(x<-1.28) continue; /* lado do QGBT, roteador, tomadas e câmera fica livre de chaves */ pts.push([x,y]); }
   const n=pts.length;
   const hook=new T.InstancedMesh(new T.CylinderGeometry(.004,.004,.04,6).rotateX(Math.PI/2),M.steel,n);
   const blade=new T.InstancedMesh(new T.BoxGeometry(.012,.052,.004),M.alu,n);
