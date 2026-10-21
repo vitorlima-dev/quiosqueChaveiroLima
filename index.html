@@ -257,7 +257,7 @@ const COL={chumbo:0x2B2D2F, mostarda:0xD4A017, branco:0xF5F5F7};
 
 /* ---------- acumuladores do BOM (preenchidos pela própria geometria) ---------- */
 const Q={};
-(function reset(){Object.assign(Q,{ripaLen:{},ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,ledSign:0,t10:0,t20:0,cftv:0,router:0,qgbt:0,cab:{m25:0,m15:0,lv:0,data:0},conduit:0,shared:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
+(function reset(){Object.assign(Q,{parts:[],ripaLen:{},ripas:0,ripaM:0,ripaA:0,metalon:0,mdfC:0,mdfB:0,vidro:0,ledVit:0,ledSanca:0,ledHalo:0,ledSign:0,t10:0,t20:0,cftv:0,router:0,qgbt:0,cab:{m25:0,m15:0,lv:0,data:0},conduit:0,shared:0,exaustor:0,nicho:0,caixas:0,trilho:0,portas:0,chist:[0,0,0]});})();
 
 const S={night:false,closed:false,infra:false,dims:false,closure:'lona',floor:'existente',density:'max',cooler:'portatil'};
 
@@ -451,11 +451,11 @@ function neon(c,x0,x1,y0,y1,z0,z1,op){
   const m=bx(G.neon,nm(c,op==null?.55:op),x0,x1,y0,y1,z0,z1); m.renderOrder=12; return m;
 }
 function route(c,pts,th,opt){
-  th=th||.022; opt=opt||{}; let len=0;
+  th=th||.022; opt=opt||{noConduit:true}; let len=0;
   for(let i=0;i<pts.length-1;i++){ const a=pts[i],b=pts[i+1]; len+=Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]);
     neon(c,Math.min(a[0],b[0])-th/2,Math.max(a[0],b[0])+th/2,Math.min(a[1],b[1])-th/2,Math.max(a[1],b[1])+th/2,Math.min(a[2],b[2])-th/2,Math.max(a[2],b[2])+th/2,.95); }
   if(opt.kind) Q.cab[opt.kind]+=len;           // metros de cabo por tipo (por condutor-trajeto)
-  if(opt.kind!=='cord') Q.conduit+=len-(opt.shared||0);  // eletroduto / passa-cabo: o trecho compartilhado conta uma vez
+  if(opt.kind!=='cord'&&!opt.noConduit) Q.conduit+=len-(opt.shared||0);  // eletroduto / passa-cabo: o trecho compartilhado conta uma vez
   return len;
 }
 function socket(par,amp,x,y,z,face,circ){
@@ -469,12 +469,14 @@ function socket(par,amp,x,y,z,face,circ){
 }
 
 /* ================= ESTRUTURA METÁLICA ================= */
-const mt=(par,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,M.metal,x0,x1,y0,y1,z0,z1); Q.metalon+=Math.max(x1-x0,y1-y0,z1-z0); return m;};
-const mdf=(par,k,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,k==='c'?M.mdfC:M.mdfB,x0,x1,y0,y1,z0,z1); const w=x1-x0,h=y1-y0,d=z1-z0; Q[k==='c'?'mdfC':'mdfB']+=2*(w*h+w*d+h*d); return m;};
-const sheet=(par,k,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,k==='c'?M.mdfC:M.mdfB,x0,x1,y0,y1,z0,z1); const d=[x1-x0,y1-y0,z1-z0].sort((a,b)=>a-b); Q[k==='c'?'mdfC':'mdfB']+=d[1]*d[2]; return m;};
-const pane=(par,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,M.glass,x0,x1,y0,y1,z0,z1); const d=[x1-x0,y1-y0,z1-z0].sort((a,b)=>a-b); Q.vidro+=d[1]*d[2]; m.renderOrder=3; return m;};
+let CTX='';
+const rec=(t,a,b,c,d)=>Q.parts.push({t,ctx:CTX,d:[a,b,c].map(v=>Math.round(Math.abs(v)*1000)).sort((p,q)=>q-p)});
+const mt=(par,x0,x1,y0,y1,z0,z1)=>{ rec('metalon',x1-x0,y1-y0,z1-z0);const m=bx(par,M.metal,x0,x1,y0,y1,z0,z1); Q.metalon+=Math.max(x1-x0,y1-y0,z1-z0); return m;};
+const mdf=(par,k,x0,x1,y0,y1,z0,z1)=>{ rec(k==='c'?'mdfC_caixa':'mdfB_caixa',x1-x0,y1-y0,z1-z0);const m=bx(par,k==='c'?M.mdfC:M.mdfB,x0,x1,y0,y1,z0,z1); const w=x1-x0,h=y1-y0,d=z1-z0; Q[k==='c'?'mdfC':'mdfB']+=2*(w*h+w*d+h*d); return m;};
+const sheet=(par,k,x0,x1,y0,y1,z0,z1)=>{ rec(k==='c'?'mdfC_chapa':'mdfB_chapa',x1-x0,y1-y0,z1-z0);const m=bx(par,k==='c'?M.mdfC:M.mdfB,x0,x1,y0,y1,z0,z1); const d=[x1-x0,y1-y0,z1-z0].sort((a,b)=>a-b); Q[k==='c'?'mdfC':'mdfB']+=d[1]*d[2]; return m;};
+const pane=(par,x0,x1,y0,y1,z0,z1)=>{ rec('vidro',x1-x0,y1-y0,z1-z0);const m=bx(par,M.glass,x0,x1,y0,y1,z0,z1); const d=[x1-x0,y1-y0,z1-z0].sort((a,b)=>a-b); Q.vidro+=d[1]*d[2]; m.renderOrder=3; return m;};
 
-(function buildStructure(){
+(function buildStructure(){ CTX='Estrutura';
   const g=G.struct, t=.04;
   // pilares de canto (sobem até a testeira)
   mt(g,XL,XL+t,0,TY0,ZF-t,ZF); mt(g,XR-t,XR,0,TY0,ZF-t,ZF); mt(g,XL,XL+t,0,TY0,ZB,ZB+t); mt(g,XR-t,XR,0,TY0,ZB,ZB+t);
@@ -501,7 +503,7 @@ const pane=(par,x0,x1,y0,y1,z0,z1)=>{const m=bx(par,M.glass,x0,x1,y0,y1,z0,z1); 
 
 /* ================= TESTEIRA, SANCA, CAIXAS DE CORTINA ================= */
 const rollers=[]; // {mesh}
-(function buildTesteira(){
+(function buildTesteira(){ CTX='Testeira';
   const g=G.test, th=.12, y0=TY0, y1=H;
   const mats=(front)=>[M.black,M.black,M.black,M.metal,front||M.black,M.black];
   const lmat=(w,num)=>{ const t=texLetreiro(w,H-TY0,num), m=std(0xffffff,.55,.1,{map:t,emissive:new T.Color(0xffffff),emissiveIntensity:0}); m.emissiveMap=t; letreiroMats.push(m); return m; }; // letreiro acende à noite
@@ -528,7 +530,7 @@ const rollers=[]; // {mesh}
 
 /* ================= PAINEL DE FUNDO, LOGO, GANCHOS ================= */
 let logoMat, haloMat;
-(function buildBack(){
+(function buildBack(){ CTX='Painel de fundo';
   const g=G.back;
   const pm=std(0x34373a,.96,0); // parede lisa e fosca, para destacar as chaves
   const panel=new T.Mesh(new T.BoxGeometry(4,H,.03),[M.mdfB,M.mdfB,M.mdfB,M.mdfB,pm,M.mdfB]); panel.position.set(0,H/2,-1.115); g.add(panel);
@@ -562,7 +564,7 @@ let logoMat, haloMat;
 
 /* ================= BANCADA DE MÁQUINAS E EXAUSTOR ================= */
 const air=[]; // setas de fluxo
-(function buildMachines(){
+(function buildMachines(){ CTX='Bancada de máquinas';
   const g=G.mach, zb=-1.10, zf=MACH_ZF, X0=BANCADA_X0; // bancada encurtada: começa em X0, liberando a passagem de entrada
   mdf(g,'c',X0,.95,.10,.90,zb,zf);
   bx(g,M.metal,X0-.02,.97,.90,.93,zb,zf+.02);
@@ -592,7 +594,7 @@ const air=[]; // setas de fluxo
 
 /* ================= NICHO TÉCNICO (OPÇÃO A) ================= */
 let coolerPortatil, coolerClimat;
-(function buildNicho(){
+(function buildNicho(){ CTX='Nicho do ar';
   const g=G.nicho, x0=.95, x1=1.40, zb=-1.10, zf=-.65;
   // corpo em MDF chumbo (laterais, topo e fundo); frente em quadro de metalon com veneziana
   sheet(g,'c',x0,x0+.02,.10,.90,zb,zf); sheet(g,'c',x1-.02,x1,.10,.90,zb,zf); sheet(g,'c',x0,x1,.88,.90,zb,zf); sheet(g,'c',x0,x1,.10,.12,zb,zf);
@@ -621,7 +623,7 @@ let coolerPortatil, coolerClimat;
 })();
 
 /* ================= LATERAL ESQUERDA: PORTA, FECHAMENTO, BANCADA ================= */
-(function buildLeft(){
+(function buildLeft(){ CTX='Posto do relojoeiro e porta';
   const g=G.left, t=.04;
   // mini painel do posto de relógios: MDF cinza chumbo até 1,30 m; acima fica aberto (sem vidro) para ventilar
   sheet(g,'c',XL+.02,XL+.035,0.04,PAINEL_H-.04,-.45,.55);
@@ -662,7 +664,7 @@ let coolerPortatil, coolerClimat;
 /* ================= VITRINE CONTÍNUA EM L ================= */
 const RUNS={};
 const VEL=[0x1f2d4a,0x4a1822,0x1c3b33];
-(function buildVitrines(){
+(function buildVitrines(){ CTX='Vitrine em L';
   const defs=[
     {id:'F',pos:[0,0,ZF],ry:0,x0:-2,x1:2,innerEnd:1.4},
     {id:'L',pos:[XR,0,ZF-VD],ry:Math.PI/2,x0:0,x1:LAT_L,innerEnd:LAT_L}
@@ -851,12 +853,12 @@ function buildTrays(){
   wire([[1.84,1.06,.95],[1.84,1.06,.70],[1.89,1.06,.70]]);          // perfil frontal, fileira 2
   wire([[1.84,1.06,.70],[1.84,1.06,.51],[1.80,1.06,.51]]);          // perfil lateral, fileira 1
   wire([[1.84,1.06,.51],[1.55,1.06,.51]]);                          // perfil lateral, fileira 2
-  [[[1.84,1.07,.99],[1.84,1.07,.95],[1.89,1.07,.95]],[[1.84,1.07,.95],[1.84,1.07,.70],[1.89,1.07,.70]],[[1.84,1.07,.70],[1.84,1.07,.51],[1.80,1.07,.51]],[[1.84,1.07,.51],[1.55,1.07,.51]]].forEach(p=>route(NEON.C4,p,.014)); // mesmos rabichos, em amarelo no modo infraestrutura
+  [[[1.84,1.07,.99],[1.84,1.07,.95],[1.89,1.07,.95]],[[1.84,1.07,.95],[1.84,1.07,.70],[1.89,1.07,.70]],[[1.84,1.07,.70],[1.84,1.07,.51],[1.80,1.07,.51]],[[1.84,1.07,.51],[1.55,1.07,.51]]].forEach(p=>route(NEON.C4,p,.014,{noConduit:true})); // mesmos rabichos, em amarelo no modo infraestrutura
   route(NEON.C4,[[-1.66,2.08,-1.11],[-1.94,2.08,-1.11]],0,{kind:'lv'});
   // letreiro (frente e laterais): 3 subidas curtas do tronco até a fita LED dentro da testeira
-  route(NEON.C4,[[1.98,2.08,-1.11],[1.98,2.27,-1.11]],.016,{kind:'lv'}); route(NEON.C4,[[1.98,2.27,-1.11],[1.98,2.27,1.0]],.012);       // lateral direita
-  route(NEON.C4,[[1.98,2.08,1.13],[1.98,2.27,1.13]],.016,{kind:'lv'});  route(NEON.C4,[[1.98,2.27,1.09],[-1.94,2.27,1.09]],.012);       // frente
-  route(NEON.C4,[[-1.94,2.08,-1.11],[-1.94,2.27,-1.11]],.016,{kind:'lv'}); route(NEON.C4,[[-1.94,2.27,-1.11],[-1.94,2.27,1.0]],.012);  // lateral esquerda
+  route(NEON.C4,[[1.98,2.08,-1.11],[1.98,2.27,-1.11]],.016,{kind:'lv'}); route(NEON.C4,[[1.98,2.27,-1.11],[1.98,2.27,1.0]],.012,{noConduit:true});       // lateral direita
+  route(NEON.C4,[[1.98,2.08,1.13],[1.98,2.27,1.13]],.016,{kind:'lv'});  route(NEON.C4,[[1.98,2.27,1.09],[-1.94,2.27,1.09]],.012,{noConduit:true});       // frente
+  route(NEON.C4,[[-1.94,2.08,-1.11],[-1.94,2.27,-1.11]],.016,{kind:'lv'}); route(NEON.C4,[[-1.94,2.27,-1.11],[-1.94,2.27,1.0]],.012,{noConduit:true});  // lateral esquerda
   // halo LED do logo: derivação do tronco para o anel
   route(NEON.C4,[[.34,2.08,-1.115],[.34,2.0,-1.115]],.016,{kind:'lv'});
   { const lr=new T.Mesh(new T.TorusGeometry(.435*.87,.012,8,64),nm(NEON.C4,.95)); lr.position.set(0,1.85,-1.09); lr.renderOrder=12; G.neon.add(lr); }
@@ -1087,7 +1089,7 @@ function renderBOM(){
     ['cab15','Cabo 1,5 mm² (caixa dupla)',`${fmt(Q.cab.m15*3,0)} m`,`${fmt(Q.cab.m15)} m de trajeto × 3 condutores`],
     ['cablv','Cabo 24 V 1,5 mm² (LED)',`${fmt(Q.cab.lv*2,0)} m`,`${fmt(Q.cab.lv)} m de trajeto × 2 condutores; a fita da sanca se alimenta pelas pontas`],
     ['cabd','Cabo de dados Cat6 + eletroduto',`${fmt(Q.cab.data+3,0)} m`,`${fmt(Q.cab.data)} m dentro do quiosque + cerca de 3 m de ligação externa até a entrada de internet`],
-    ['cond','Eletroduto / passa-cabo no metalon',`${fmt(Q.conduit)} m`,'trajeto total, com o trecho do nicho dentro do eletroduto do C1; antes ficava em cerca de 24,6 m'],
+    ['cond','Eletroduto / passa-cabo no metalon',`${fmt(Q.conduit)} m`,'trajeto total, com o trecho do nicho dentro do eletroduto do C1; fita do letreiro e rabichos do LED não contam'],
     ['ex','Micro-exaustor de limalha',`${Q.exaustor} un`,'embutido no tampo da bancada de máquinas'],
     ['pts','Total de pontos',`${Q.t10+Q.t20+Q.qgbt}`,`${Q.t10+Q.t20} tomadas, ${Q.qgbt} quadro; roteador e câmera usam duas das tomadas`],
     ['Climatização · Opção A'],
@@ -1142,7 +1144,7 @@ function renderAudit(){
     ['Viabilidade'],
     ['warn','Testeira sem pilar central, vão de 4,00 m','~3 a 4 mm','flecha estimada de metalon 40×40×1,2 mm com cerca de 10 kg/m, limite usual L/360 = 11 mm. Vento, rolo motorizado e uso real não entram na conta: confirmar com serralheiro'],
     ['warn','Carga elétrica simultânea estimada','~2,5 kW','Yale e pantográfica cerca de 0,9 kW, ar 1,2 kW, LED 0,2 kW, posto do relojoeiro e rede 0,2 kW. Cerca de 20 A em 127 V ou 11 A em 220 V. Quem dimensiona o alimentador e o QGBT é o eletricista'],
-    ['ok','Fiação simplificada',`${fmt(Q.conduit)} m de eletroduto`,'contra cerca de 24,6 m antes. Fonte LED única, tronco único no topo, nicho no eletroduto do C1, circuito de rede junto com os LEDs, tomadas das máquinas em 10A'],
+    ['ok','Fiação simplificada',`${fmt(Q.conduit)} m de eletroduto`,'trajeto total dentro do metalon, sem a fita do letreiro e os rabichos do LED. Fonte LED única, tronco único no topo, nicho no eletroduto do C1, rede junto com os LEDs, tomadas das máquinas em 10A'],
     ['warn','Climatização com a frente aberta','efeito baixo','ar portátil perde eficiência com a frente aberta. Para o lado aberto de ventilação, o climatizador evaporativo funciona melhor'],
     ['ok','Base transportável','9,20 m²','placa de piso sobre quadro de metalon; fiação interna ao quadro'],
     ['Aproveitamento e perdas'],
